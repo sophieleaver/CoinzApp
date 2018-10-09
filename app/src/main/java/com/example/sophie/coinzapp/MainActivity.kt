@@ -1,5 +1,6 @@
 package com.example.sophie.coinzapp
 
+import android.annotation.SuppressLint
 import android.location.Location
 import android.location.LocationListener
 import android.os.Bundle
@@ -28,16 +29,16 @@ import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener{
-    //OnMapReadyCallback, LocationEngineListener, PermissionsListener
+    //
 
     private var mapView: MapView? = null
     private var map : MapboxMap? = null
     private val tag = "MainActivity"
 
-    private lateinit var originLocation: Location
-    private lateinit var permissionsManager : PermissionsManager
-    private lateinit var locationEngine : LocationEngine
-    private lateinit var locationLayerPlugin : LocationLayerPlugin
+    private lateinit var originLocation: Location // where the current location is stored at all times
+    private lateinit var permissionsManager : PermissionsManager // removes code required for permissions
+    private lateinit var locationEngine : LocationEngine // component that gives user location
+    private lateinit var locationLayerPlugin : LocationLayerPlugin // provides location awareness to mobile - icons representation of user location
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,9 +58,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
     }
 
+    @SuppressLint("MissingPermission")
     public override fun onStart() {
         super.onStart()
+//        if (PermissionsManager.areLocationPermissionsGranted(this)){
+//            locationEngine?.requestLocationUpdates()
+//            locationLayerPlugin?.onStart()
+//        }
         mapView?.onStart()
+
     }
 
     public override fun onResume() {
@@ -73,7 +80,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     }
 
     public override fun onStop() {
+        //turn off permissions on stop
         super.onStop()
+        //locationEngine?.removeLocationUpdates()
+        //locationLayerPlugin?.onStop()
         mapView!!.onStop()
     }
 
@@ -85,6 +95,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     override fun onDestroy() {
         super.onDestroy()
         mapView!!.onDestroy()
+        //locationEngine?.deactivate()
     }
 
     override fun onMapReady(mapboxMap: MapboxMap?) {
@@ -103,10 +114,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
     private fun enableLocation() {
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
+            //if permissions are granted then
             Log.d(tag, "Permissions are granted")
             initialiseLocationEngine()
             initialiseLocationLayer()
         } else {
+            // if permissions not granted then activate listener and request location
             Log.d(tag, "Permissions are not granted")
             permissionsManager = PermissionsManager(this)
             permissionsManager.requestLocationPermissions(this)
@@ -114,7 +127,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     }
     @SuppressWarnings("MissingPermission")
     private fun initialiseLocationEngine() {
-        locationEngine = LocationEngineProvider(this).obtainBestLocationEngineAvailable()
+        locationEngine = LocationEngineProvider(this).obtainBestLocationEngineAvailable()//returns location engine
         locationEngine.apply {
             interval = 5000 // preferably every 5 seconds !! rewrite comments
             fastestInterval = 1000 // at most every second
@@ -125,7 +138,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         if (lastLocation != null) {
             originLocation = lastLocation // set origin loc as the last loc
             setCameraPosition(lastLocation)
-        } else { locationEngine.addLocationEngineListener(this) }
+        } else // if last location does not exist
+        { locationEngine.addLocationEngineListener(this) }
     }
 
     @SuppressWarnings("MissingPermission")
@@ -135,8 +149,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             if (map == null) { Log.d(tag, "map is null") }
             else {
                 locationLayerPlugin = LocationLayerPlugin(mapView!!, map!!, locationEngine)
-                locationLayerPlugin.apply { setLocationLayerEnabled(true)
-                    cameraMode = CameraMode.TRACKING
+                locationLayerPlugin.apply { setLocationLayerEnabled(true) // enables camera tracking location
+                    cameraMode = CameraMode.TRACKING // tracks change in loc.
                     renderMode = RenderMode.NORMAL
                 }
             }
@@ -144,6 +158,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     }
 
     private fun setCameraPosition(location: Location) {
+        // set camera location
         val latlng = LatLng(location.latitude, location.longitude)
         map?.animateCamera(CameraUpdateFactory.newLatLng(latlng))
     }
@@ -153,7 +168,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             Log.d(tag, "[onLocationChanged] location is null")
         } else {
             originLocation = location
-            setCameraPosition(originLocation)
+            setCameraPosition(location) // changed from originLocation
         }
     }
     @SuppressWarnings("MissingPermission")
@@ -163,8 +178,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     }
 
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {
+        // present a dialof on why access is needed !!!!!!!!!!!!!!!!1
         Log.d(tag, "Permissions: $permissionsToExplain")
-// Present popup message or dialog
     }
 
     override fun onPermissionResult(granted: Boolean) {
@@ -172,8 +187,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         if (granted) {
             enableLocation()
         } else {
-// Open a dialogue with the user
+            // Open a dialogue with the user
         }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
