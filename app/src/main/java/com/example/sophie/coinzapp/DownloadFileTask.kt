@@ -18,9 +18,11 @@ class DownloadFileTask(private val caller : DownloadCompleteListener) : AsyncTas
         private fun loadFileFromNetwork(urlString : String) : String {
             val stream : InputStream = downloadUrl(urlString)
             //val result :String = readStream(stream)
-            var result : String? = null
-            val result = stream.bufferedReader().use { it.readText() }  // defaults to UTF-8
-            return result
+            //var result : String? = null
+            //var result = stream.bufferedReader().use { it.readText() }  // defaults to UTF-8
+            val inputAsString : String =  stream.bufferedReader().use { it.readText() }
+            return inputAsString
+            //return inputAsString
         }
 
         @Throws(IOException::class)
