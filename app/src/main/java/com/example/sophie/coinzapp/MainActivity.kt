@@ -104,7 +104,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         editor.putString("lastDownloadDate", downloadDate)
         editor.apply() // apply edits
 
-
         mapView!!.onStop()
     }
 
