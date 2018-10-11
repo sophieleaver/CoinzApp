@@ -1,6 +1,7 @@
 package com.example.sophie.coinzapp
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.location.Location
 import android.location.LocationListener
 import android.os.Bundle
@@ -35,6 +36,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private var map : MapboxMap? = null
     private val tag = "MainActivity"
 
+    private var downloadDate = "" // is in YYYY/MM/DD format
+    private var preferencesFile = "MyPrefsFile"
+
     private lateinit var originLocation: Location // where the current location is stored at all times
     private lateinit var permissionsManager : PermissionsManager // removes code required for permissions
     private lateinit var locationEngine : LocationEngine // component that gives user location
@@ -64,7 +68,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 //        if (PermissionsManager.areLocationPermissionsGranted(this)){
 //            locationEngine?.requestLocationUpdates()
 //            locationLayerPlugin?.onStart()
+
+
 //        }
+
+        //restore user preferences
+        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
+        downloadDate = settings.getString("lastDownloadDate", "")
+        Log.d(tag, "[onStart] Recalled lastDownloadDate is '$downloadDate'")
         mapView?.onStart()
 
     }
@@ -83,7 +94,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         //turn off permissions on stop
         super.onStop()
         //locationEngine?.removeLocationUpdates()
-        //locationLayerPlugin?.onStop()
+        //        //locationLayerPlugin?.onStop()
+
+        Log.d(tag, "[onStop] Storing lastDownloadDate of $downloadDate")
+
+        // All objects are from android.context.Context
+        val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
+        val editor = settings.edit() // editor = makes pref changes
+        editor.putString("lastDownloadDate", downloadDate)
+        editor.apply() // apply edits
+
+
         mapView!!.onStop()
     }
 
