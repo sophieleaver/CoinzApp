@@ -17,7 +17,13 @@ import com.mapbox.android.core.location.LocationEnginePriority
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
+import com.mapbox.geojson.Feature
+import com.mapbox.geojson.FeatureCollection
+import com.mapbox.geojson.Point
+import com.mapbox.geojson.Geometry
 import com.mapbox.mapboxsdk.Mapbox
+import com.google.gson.JsonObject
+import com.mapbox.mapboxsdk.annotations.MarkerViewOptions
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
@@ -26,8 +32,19 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.CameraMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode
+import com.mapbox.mapboxsdk.style.layers.LineLayer
+import com.mapbox.mapboxsdk.style.light.Position
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+//import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
+import com.mapbox.mapboxsdk.annotations.Icon
+import com.mapbox.mapboxsdk.annotations.IconFactory
+import com.mapbox.mapboxsdk.annotations.Marker
+import com.mapbox.mapboxsdk.annotations.MarkerOptions
+
+
 
 import kotlinx.android.synthetic.main.activity_main.*
+import java.net.URL
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener{
     //
@@ -44,6 +61,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private lateinit var locationEngine : LocationEngine // component that gives user location
     private lateinit var locationLayerPlugin : LocationLayerPlugin // provides location awareness to mobile - icons representation of user location
 
+    //Coinz impl
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,8 +136,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         //locationEngine?.deactivate()
     }
 
+
+
     override fun onMapReady(mapboxMap: MapboxMap?) {
-        if (mapboxMap == null){
+        if (mapboxMap == null) {
             Log.d(tag, "[onMapReady] mapboxMap is null")
         } else {
             map = mapboxMap
@@ -127,10 +147,40 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             map?.uiSettings?.isCompassEnabled = true // set ui options
             map?.uiSettings?.isZoomControlsEnabled = true
 
-            enableLocation() //make user location available
+            enableLocation()
 
+            //**DOWNLOAD GEOJSON MAP FOR THE DAY
+            //**using async task -> asynctask(input to task, progress info whilst task is running, type of the result returned)
+
+            val testGeoJsonUrl = "http://homepages.inf.ed.ac.uk/stg/coinz/2018/10/03/coinzmap.geojson"//TODO parse todays geojson url
+            Log.d(tag, "URL is $testGeoJsonUrl")
+            val geoJsonDataString = DownloadFileTask(caller = DownloadCompleteRunner).execute(testGeoJsonUrl).get() // TODO check on listener functionality
+
+            val source = GeoJsonSource("geojson", geoJsonDataString) // create new GeoJsonSource from string json map data
+            mapboxMap.addSource(source) // add source to the map
+            //mapboxMap.addLayer(var layer =  LineLayer("geojson")
+
+            val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
+
+            //val features = featureCollection.fromFeatures(arrayOf(Feature.fromGeometry(lineString)))
+
+            val features = featureCollection.features()
+            if (features != null) {
+                for (f in features) {
+                    val point : Geometry ?= f.geometry()
+                    if (point is Point) {
+                        //val coordinates = point.coordinates() as Position
+
+                        mapboxMap.addMarker(MarkerOptions().position(LatLng(point.latitude(), point.longitude())))
+                    }
+                }
+            } else {
+                Log.d(tag, "ERROR, feature list is null")
+            }
         }
     }
+
+
 
     private fun enableLocation() {
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
@@ -149,7 +199,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private fun initialiseLocationEngine() {
         locationEngine = LocationEngineProvider(this).obtainBestLocationEngineAvailable()//returns location engine
         locationEngine.apply {
-            interval = 5000 // preferably every 5 seconds !! rewrite comments
+            interval = 5000 // preferably every 5 seconds !!  TODO rewrite comments
             fastestInterval = 1000 // at most every second
             priority = LocationEnginePriority.HIGH_ACCURACY
             activate()
@@ -198,7 +248,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     }
 
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {
-        // present a dialof on why access is needed !!!!!!!!!!!!!!!!1
+        // TODO present a dialog on why access is needed
         Log.d(tag, "Permissions: $permissionsToExplain")
     }
 
@@ -207,7 +257,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         if (granted) {
             enableLocation()
         } else {
-            // Open a dialogue with the user
+            // TODO Open a dialogue with the user
         }
     }
 
