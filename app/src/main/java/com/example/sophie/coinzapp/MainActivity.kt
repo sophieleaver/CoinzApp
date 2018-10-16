@@ -3,7 +3,7 @@ package com.example.sophie.coinzapp
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
-import android.location.LocationListener
+//import android.location.LocationListener
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
@@ -17,13 +17,13 @@ import com.mapbox.android.core.location.LocationEnginePriority
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
-import com.mapbox.geojson.Feature
+//import com.mapbox.geojson.Feature
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import com.mapbox.geojson.Geometry
 import com.mapbox.mapboxsdk.Mapbox
-import com.google.gson.JsonObject
-import com.mapbox.mapboxsdk.annotations.MarkerViewOptions
+//import com.google.gson.JsonObject
+//import com.mapbox.mapboxsdk.annotations.MarkerViewOptions
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
@@ -32,19 +32,18 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.CameraMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode
-import com.mapbox.mapboxsdk.style.layers.LineLayer
-import com.mapbox.mapboxsdk.style.light.Position
+//import com.mapbox.mapboxsdk.style.layers.LineLayer
+//import com.mapbox.mapboxsdk.style.light.Position
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 //import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
-import com.mapbox.mapboxsdk.annotations.Icon
-import com.mapbox.mapboxsdk.annotations.IconFactory
-import com.mapbox.mapboxsdk.annotations.Marker
+//import com.mapbox.mapboxsdk.annotations.Icon
+//import com.mapbox.mapboxsdk.annotations.IconFactory
+//import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.annotations.MarkerOptions
 
 
 
 import kotlinx.android.synthetic.main.activity_main.*
-import java.net.URL
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener{
     //
@@ -60,8 +59,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private lateinit var permissionsManager : PermissionsManager // removes code required for permissions
     private lateinit var locationEngine : LocationEngine // component that gives user location
     private lateinit var locationLayerPlugin : LocationLayerPlugin // provides location awareness to mobile - icons representation of user location
-
-    //Coinz impl
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
