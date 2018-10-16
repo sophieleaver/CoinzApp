@@ -23,7 +23,7 @@ import com.mapbox.geojson.Point
 import com.mapbox.geojson.Geometry
 import com.mapbox.mapboxsdk.Mapbox
 import com.google.gson.JsonObject
-import com.mapbox.mapboxsdk.annotations.MarkerViewOptions
+import com.mapbox.mapboxsdk.annotations.MarkerOptions
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
@@ -39,7 +39,7 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.mapbox.mapboxsdk.annotations.Icon
 import com.mapbox.mapboxsdk.annotations.IconFactory
 import com.mapbox.mapboxsdk.annotations.Marker
-import com.mapbox.mapboxsdk.annotations.MarkerOptions
+//import com.mapbox.mapboxsdk.annotations.MarkerOptions
 
 
 
