@@ -45,6 +45,10 @@ import com.mapbox.mapboxsdk.annotations.MarkerOptions
 
 import kotlinx.android.synthetic.main.activity_main.*
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener{
     //
@@ -54,6 +58,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private val tag = "MainActivity"
 
     private var downloadDate = "" // is in YYYY/MM/DD format
+    private val todayDate = SimpleDateFormat("YYYY/MM/dd").format(Calendar.getInstance().time)
+
     private var preferencesFile = "MyPrefsFile"
 
     private lateinit var originLocation: Location // where the current location is stored at all times
@@ -143,39 +149,34 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             Log.d(tag, "[onMapReady] mapboxMap is null")
         } else {
             map = mapboxMap
-
+            //Log.d(tag, "today date = $todayDate");
             map?.uiSettings?.isCompassEnabled = true // set ui options
             map?.uiSettings?.isZoomControlsEnabled = true
 
             enableLocation()
 
             //**DOWNLOAD GEOJSON MAP FOR THE DAY
-            //**using async task -> asynctask(input to task, progress info whilst task is running, type of the result returned)
 
-            val testGeoJsonUrl = "http://homepages.inf.ed.ac.uk/stg/coinz/2018/10/03/coinzmap.geojson"//TODO parse todays geojson url
-            Log.d(tag, "URL is $testGeoJsonUrl")
+            val testGeoJsonUrl = "http://homepages.inf.ed.ac.uk/stg/coinz/$todayDate/coinzmap.geojson"
+                //Log.d(tag, "URL is $testGeoJsonUrl")
             val geoJsonDataString = DownloadFileTask(caller = DownloadCompleteRunner).execute(testGeoJsonUrl).get() // TODO check on listener functionality
 
             val source = GeoJsonSource("geojson", geoJsonDataString) // create new GeoJsonSource from string json map data
             mapboxMap.addSource(source) // add source to the map
-            //mapboxMap.addLayer(var layer =  LineLayer("geojson")
+                //mapboxMap.addLayer(var layer =  LineLayer("geojson")
 
             val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
-
-            //val features = featureCollection.fromFeatures(arrayOf(Feature.fromGeometry(lineString)))
 
             val features = featureCollection.features()
             if (features != null) {
                 for (f in features) {
                     val point : Geometry ?= f.geometry()
                     if (point is Point) {
-                        //val coordinates = point.coordinates() as Position
-
                         mapboxMap.addMarker(MarkerOptions().position(LatLng(point.latitude(), point.longitude())))
                     }
                 }
             } else {
-                Log.d(tag, "ERROR, feature list is null")
+                Log.d(tag, "ERROR,$ feature list is null") //implication?
             }
         }
     }
