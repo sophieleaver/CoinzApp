@@ -44,6 +44,8 @@ import com.mapbox.mapboxsdk.annotations.MarkerOptions
 
 
 import kotlinx.android.synthetic.main.activity_main.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener{
     //
@@ -53,6 +55,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private val tag = "MainActivity"
 
     private var downloadDate = "" // is in YYYY/MM/DD format
+    private val todayDate = SimpleDateFormat("YYYY/MM/dd").format(Calendar.getInstance().time)
     private var preferencesFile = "MyPrefsFile"
 
     private lateinit var originLocation: Location // where the current location is stored at all times
@@ -149,7 +152,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             //**DOWNLOAD GEOJSON MAP FOR THE DAY
             //**using async task -> asynctask(input to task, progress info whilst task is running, type of the result returned)
 
-            val testGeoJsonUrl = "http://homepages.inf.ed.ac.uk/stg/coinz/2018/10/03/coinzmap.geojson"//TODO parse todays geojson url
+            val testGeoJsonUrl = "http://homepages.inf.ed.ac.uk/stg/coinz/$todayDate/coinzmap.geojson"
             Log.d(tag, "URL is $testGeoJsonUrl")
             val geoJsonDataString = DownloadFileTask(caller = DownloadCompleteRunner).execute(testGeoJsonUrl).get() // TODO check on listener functionality
 
