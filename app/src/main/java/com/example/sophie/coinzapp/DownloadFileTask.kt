@@ -19,8 +19,8 @@ class DownloadFileTask(private val caller : DownloadCompleteListener) : AsyncTas
         private fun loadFileFromNetwork(urlString : String) : String {
             val stream: InputStream = downloadUrl(urlString) //open input string from given url
             var result = stream.bufferedReader().use { it.readText() } // read input stream and build string as result
-            return result
             Log.d(tag, "File loaded from network successfully" )
+            return result
         }
 
         @Throws(IOException::class)
