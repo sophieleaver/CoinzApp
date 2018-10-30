@@ -5,12 +5,18 @@ import android.content.Context
 import android.location.Location
 //import android.location.LocationListener
 import android.os.Bundle
+import android.support.annotation.NonNull
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
+import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
@@ -57,6 +63,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private var downloadDate = "" // is in YYYY/MM/DD format
     private val todayDate = SimpleDateFormat("YYYY/MM/dd").format(Calendar.getInstance().time)
     private var preferencesFile = "MyPrefsFile"
+    private var mAuth: FirebaseAuth? = null
 
     private lateinit var originLocation: Location // where the current location is stored at all times
     private lateinit var permissionsManager : PermissionsManager // removes code required for permissions
@@ -78,6 +85,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
         }
+        mAuth = FirebaseAuth.getInstance()
     }
 
     @SuppressLint("MissingPermission")
@@ -89,6 +97,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
 
 //        }
+            super.onStart();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        updateUI(mAuth?.currentUser)
+        mAuth?.createUserWithEmailAndPassword(email, password)
+                ?.addOnCompleteListener(this)
+                { task -> if (task.isSuccessful)
+                    {
+                    // Sign in success, update UI with user info
+
+                    }
+                    else
+                    {
+                    // Sign in failed, display a message to the user
+                    Log.d(tag,"log-in fail")
+                    }
+                }
 
         //restore user preferences
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
@@ -97,6 +121,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         mapView?.onStart()
 
     }
+
+
+
+
 
     public override fun onResume() {
         super.onResume()
@@ -158,28 +186,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
             val source = GeoJsonSource("geojson", geoJsonDataString) // create new GeoJsonSource from string json map data
             mapboxMap.addSource(source) // add source to the map
-            //mapboxMap.addLayer(var layer =  LineLayer("geojson")
+
 
             val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
+            addFeaturesToMap(featureCollection, mapboxMap)
 
-            //val features = featureCollection.fromFeatures(arrayOf(Feature.fromGeometry(lineString)))
-
-            val features = featureCollection.features()
-            if (features != null) {
-                for (f in features) {
-                    val point : Geometry ?= f.geometry()
-                    if (point is Point) {
-                        //val coordinates = point.coordinates() as Position
-
-                        mapboxMap.addMarker(MarkerOptions().position(LatLng(point.latitude(), point.longitude())))
-                    }
-                }
-            } else {
-                Log.d(tag, "ERROR, feature list is null")
-            }
         }
     }
 
+    private fun addFeaturesToMap(featureColl : FeatureCollection, mapboxMap : MapboxMap){
+        val features = featureColl.features()
+        if (features != null) {
+            for (f in features) {
+                val point : Geometry ?= f.geometry()
+                if (point is Point) {
+                    //val coordinates = point.coordinates() as Position
+
+                    mapboxMap.addMarker(MarkerOptions().position(LatLng(point.latitude(), point.longitude())))
+                }
+            }
+        } else {
+            Log.d(tag, "ERROR, feature list is null")
+        }
+    }
 
 
     private fun enableLocation() {
