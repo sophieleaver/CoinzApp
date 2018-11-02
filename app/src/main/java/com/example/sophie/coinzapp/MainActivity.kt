@@ -2,6 +2,7 @@ package com.example.sophie.coinzapp
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.location.Location
 //import android.location.LocationListener
 import android.os.Bundle
@@ -13,6 +14,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import com.example.sophie.coinzapp.R.id.fab
+import com.example.sophie.coinzapp.R.id.toolbar
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
@@ -54,7 +57,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener{
-    //
+    //https://medium.com/@paul.allies/kotlin-for-android-firebase-auth-275a262d825e
+    //https://github.com/firebase/quickstart-android/blob/master/auth/app/src/main/java/com/google/firebase/quickstart/auth/kotlin/EmailPasswordActivity.kt
 
     private var mapView: MapView? = null
     private var map : MapboxMap? = null
@@ -63,7 +67,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private var downloadDate = "" // is in YYYY/MM/DD format
     private val todayDate = SimpleDateFormat("YYYY/MM/dd").format(Calendar.getInstance().time)
     private var preferencesFile = "MyPrefsFile"
-    private var mAuth: FirebaseAuth? = null
+
 
     private lateinit var originLocation: Location // where the current location is stored at all times
     private lateinit var permissionsManager : PermissionsManager // removes code required for permissions
@@ -73,19 +77,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //Mapbox access token
-
         setContentView(R.layout.activity_main)
+        startActivity(Intent( this, LoginActivity::class.java))
         Mapbox.getInstance(this, "pk.eyJ1Ijoic29waGllbGVhdmVyIiwiYSI6ImNqbXRkdXdkdzE5NXozcWw4cHNtN2RxbjAifQ.qdD_mPQW_dthnmphOmiZRw")
         mapView = findViewById<View>(R.id.mapView) as MapView
         mapView!!.onCreate(savedInstanceState)
         mapView?.getMapAsync (this)
-        setSupportActionBar(toolbar)
+        //setSupportActionBar(toolbar)
 
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
-        }
-        mAuth = FirebaseAuth.getInstance()
+//        fab.setOnClickListener { view ->
+//            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                    .setAction("Action", null).show()
+//        }
     }
 
     @SuppressLint("MissingPermission")
@@ -97,22 +100,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
 
 //        }
-            super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
-        updateUI(mAuth?.currentUser)
-        mAuth?.createUserWithEmailAndPassword(email, password)
-                ?.addOnCompleteListener(this)
-                { task -> if (task.isSuccessful)
-                    {
-                    // Sign in success, update UI with user info
 
-                    }
-                    else
-                    {
-                    // Sign in failed, display a message to the user
-                    Log.d(tag,"log-in fail")
-                    }
-                }
+        // Check if user is signed in (non-null) and update UI accordingly.
+        //updateUI(mAuth?.currentUser)
 
         //restore user preferences
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
@@ -184,8 +174,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             Log.d(tag, "URL is $testGeoJsonUrl")
             val geoJsonDataString = DownloadFileTask(caller = DownloadCompleteRunner).execute(testGeoJsonUrl).get() // TODO check on listener functionality
 
-            val source = GeoJsonSource("geojson", geoJsonDataString) // create new GeoJsonSource from string json map data
-            mapboxMap.addSource(source) // add source to the map
+            val geoJsonSource = GeoJsonSource("geojson", geoJsonDataString) // create new GeoJsonSource from string json map data
+            mapboxMap.addSource(geoJsonSource) // add source to the map
 
 
             val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
