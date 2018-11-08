@@ -75,7 +75,7 @@ class LoginActivity : AppCompatActivity() {
                         val user = auth.currentUser
                         updateUI(user)
 
-                        //[START] create new bank account for user
+                        //[START] create new database entry for user
 
                         val userAccount = HashMap<String, Any?>()
                         val db = FirebaseFirestore.getInstance()
@@ -83,29 +83,30 @@ class LoginActivity : AppCompatActivity() {
                         //user.put("username", userName)
                         userAccount.put("goldInBank", 0)
 
-//                        val wallet = HashMap<String, Any?>()
-//                        wallet.put("nullCoin", 0)
-//                        userAccount.put("wallet", wallet)
-//                        val collectedCoins = HashMap<String, Any?>()
-//                        userAccount.put("")
-//                        val uncollectedCoins = HashMap<String, Any?>()
-
-
+                        val nullCoin = HashMap<String, Any?>() //this coin is so uncollectedCoins and wallet are not empty
 
                         Log.d(tag, "create new bankaccount in database, userID = " + auth.uid.toString())
-
+                        //1. create new user and add to collection users
                         db.collection("users").document(auth.uid.toString()) // check firestore tutorial
                                 .set(userAccount)
                                 .addOnSuccessListener { "DocumentSnapshot successfully written" }
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
-//                        db.collection("users").document(auth.uid.toString())
-//                                .collection("wallet")
-//                                .add("userAccount")
-//                                .addOnSuccessListener { "DocumentSnapshot successfully written" }
-//                                .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
+                        //2. create a collection of uncollected coins, initialised with a null coin, for the user
+                        db.collection("users").document(auth.uid.toString())
+                                .collection("uncollectedCoins").document("nullCoin")
+                                .set(nullCoin)
+                                .addOnSuccessListener { "DocumentSnapshot successfully written" }
+                                .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
-                        //[END] create new bank account for user
+                        //3. create a wallet, initialised with a null coin, for the user
+                        db.collection("users").document(auth.uid.toString())
+                                .collection("wallet").document("nullCoin")
+                                .set(nullCoin)
+                                .addOnSuccessListener { "DocumentSnapshot successfully written" }
+                                .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
+
+                        //[END] create new database entry for user
 
                     } else {
                         // If sign in fails, display a message to the user.
