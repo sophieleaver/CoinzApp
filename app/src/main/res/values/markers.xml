@@ -1,0 +1,53 @@
+<resources>
+    <integer-array name="dollar_icons"> //typedarrays green 00ff00
+        <item>@drawable/icon0_00ff00</item>
+        <item>@drawable/icon1_00ff00</item>
+        <item>@drawable/icon2_00ff00</item>
+        <item>@drawable/icon3_00ff00</item>
+        <item>@drawable/icon4_00ff00</item>
+        <item>@drawable/icon5_00ff00</item>
+        <item>@drawable/icon6_00ff00</item>
+        <item>@drawable/icon7_00ff00</item>
+        <item>@drawable/icon8_00ff00</item>
+        <item>@drawable/icon9_00ff00</item>
+    </integer-array>
+
+    <integer-array name="penny_icons">//red ff0000
+        <item>@drawable/icon0_ff0000</item>
+        <item>@drawable/icon1_ff0000</item>
+        <item>@drawable/icon2_ff0000</item>
+        <item>@drawable/icon3_ff0000</item>
+        <item>@drawable/icon4_ff0000</item>
+        <item>@drawable/icon5_ff0000</item>
+        <item>@drawable/icon6_ff0000</item>
+        <item>@drawable/icon7_ff0000</item>
+        <item>@drawable/icon8_ff0000</item>
+        <item>@drawable/icon9_ff0000</item>
+    </integer-array>
+    <integer-array name="shilling_icons">//blue 0000ff
+        <item>@drawable/icon0_0000ff</item>
+        <item>@drawable/icon1_0000ff</item>
+        <item>@drawable/icon2_0000ff</item>
+        <item>@drawable/icon3_0000ff</item>
+        <item>@drawable/icon4_0000ff</item>
+        <item>@drawable/icon5_0000ff</item>
+        <item>@drawable/icon6_0000ff</item>
+        <item>@drawable/icon7_0000ff</item>
+        <item>@drawable/icon8_0000ff</item>
+        <item>@drawable/icon9_0000ff</item>
+    </integer-array>
+
+    <integer-array name="quid_icons">//yellow ffff00
+        <item>@drawable/icon0_ffff00</item>
+        <item>@drawable/icon1_ffff00</item>
+        <item>@drawable/icon2_ffff00</item>
+        <item>@drawable/icon3_ffff00</item>
+        <item>@drawable/icon4_ffff00</item>
+        <item>@drawable/icon5_ffff00</item>
+        <item>@drawable/icon6_ffff00</item>
+        <item>@drawable/icon7_ffff00</item>
+        <item>@drawable/icon8_ffff00</item>
+        <item>@drawable/icon9_ffff00</item>
+
+    </integer-array>
+</resources>

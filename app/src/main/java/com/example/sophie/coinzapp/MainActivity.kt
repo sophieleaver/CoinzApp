@@ -3,34 +3,38 @@ package com.example.sophie.coinzapp
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.res.TypedArray
 import android.location.Location
 //import android.location.LocationListener
 import android.os.Bundle
 import android.support.annotation.NonNull
+import android.support.design.widget.FloatingActionButton
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
 import com.example.sophie.coinzapp.R.id.fab
-import com.example.sophie.coinzapp.R.id.toolbar
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
-import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.*
+//import com.example.sophie.coinzapp.R.id.floatingActionButton
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
 import com.mapbox.android.core.location.LocationEnginePriority
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
+import com.mapbox.geojson.Feature
 //import com.mapbox.geojson.Feature
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import com.mapbox.geojson.Geometry
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.annotations.Icon
+import com.mapbox.mapboxsdk.annotations.IconFactory
 //import com.google.gson.JsonObject
 //import com.mapbox.mapboxsdk.annotations.MarkerViewOptions
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
@@ -49,10 +53,9 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 //import com.mapbox.mapboxsdk.annotations.IconFactory
 //import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.annotations.MarkerOptions
+import kotlinx.android.synthetic.main.activity_login.*
 
 
-
-import kotlinx.android.synthetic.main.activity_main.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -63,6 +66,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private var mapView: MapView? = null
     private var map : MapboxMap? = null
     private val tag = "MainActivity"
+    private lateinit var auth:  FirebaseAuth
 
     private var downloadDate = "" // is in YYYY/MM/DD format
     private val todayDate = SimpleDateFormat("YYYY/MM/dd").format(Calendar.getInstance().time)
@@ -76,19 +80,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //Mapbox access token
+
         setContentView(R.layout.activity_main)
-        startActivity(Intent( this, LoginActivity::class.java))
+        //Mapbox access token
         Mapbox.getInstance(this, "pk.eyJ1Ijoic29waGllbGVhdmVyIiwiYSI6ImNqbXRkdXdkdzE5NXozcWw4cHNtN2RxbjAifQ.qdD_mPQW_dthnmphOmiZRw")
         mapView = findViewById<View>(R.id.mapView) as MapView
         mapView!!.onCreate(savedInstanceState)
         mapView?.getMapAsync (this)
         //setSupportActionBar(toolbar)
 
-//        fab.setOnClickListener { view ->
+        val fab = findViewById<FloatingActionButton>(R.id.fab)
+        fab.setOnClickListener { // view ->
 //            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
 //                    .setAction("Action", null).show()
-//        }
+
+            //TODO implement signout function
+            auth = FirebaseAuth.getInstance()
+            auth.signOut()
+            skip_button.setOnClickListener {startActivity(Intent( this, LoginActivity::class.java))}
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -101,8 +111,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
 //        }
 
-        // Check if user is signed in (non-null) and update UI accordingly.
-        //updateUI(mAuth?.currentUser)
+
 
         //restore user preferences
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
@@ -179,20 +188,65 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
 
             val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
-            addFeaturesToMap(featureCollection, mapboxMap)
+            addFeaturesAsUncollectedCoins(featureCollection)
+            addUncollectedCoinsToMap(mapboxMap)
 
         }
     }
 
-    private fun addFeaturesToMap(featureColl : FeatureCollection, mapboxMap : MapboxMap){
+//    private fun addFeaturesToMap(featureColl : FeatureCollection, mapboxMap : MapboxMap){
+//        //iterate over feature collection and add markers
+//        val features = featureColl.features()
+//        if (features != null) {
+//            for (f in features) {
+//                if (f !=null) {
+//                    val point: Geometry? = f.geometry()
+//                    if (point is Point) {
+//                        //find which icon to add
+//                        val icon = findIcon(f)
+//                        //add marker
+//                        mapboxMap.addMarker(MarkerOptions()
+//                                .position(LatLng(point.latitude(), point.longitude()))
+//                                .icon(icon)
+//                                .snippet(f.getStringProperty("currency") + ", value: " + f.getStringProperty("value")))
+//                    }
+//                }
+//            }
+//        } else {
+//            Log.d(tag, "ERROR, feature list is null")
+//        }
+//    }
+
+    private fun addFeaturesAsUncollectedCoins(featureColl : FeatureCollection){
+        //iterate over feature collection and add markers
+        Log.d(tag, "adding feature collection coins to database")
+        val db = FirebaseFirestore.getInstance()
         val features = featureColl.features()
         if (features != null) {
             for (f in features) {
-                val point : Geometry ?= f.geometry()
-                if (point is Point) {
-                    //val coordinates = point.coordinates() as Position
+                if (f !=null) {
+                    val point: Geometry? = f.geometry()
+                    if (point is Point) {
 
-                    mapboxMap.addMarker(MarkerOptions().position(LatLng(point.latitude(), point.longitude())))
+                        //add marker to database
+                        val coin = HashMap<String, Any?>() //TODO add as user collection rather than new collection
+
+                        val snippet = f.getStringProperty("currency") + ", value: " + f.getStringProperty("value")
+
+                        coin.put("lat",point.latitude())
+                        coin.put("long",point.longitude())
+                        coin.put("currency", f.getStringProperty("currency"))
+                        coin.put("value", f.getStringProperty("value"))
+                        coin.put("symbol", f.getStringProperty("marker-symbol"))
+                        coin.put("snippet", snippet)
+                        coin.put("timestamp", FieldValue.serverTimestamp())
+
+                        db.collection("uncollectedCoinz").document(f.getStringProperty("id")) // check firestore tutorial
+                                .set(coin)
+                                .addOnSuccessListener { "DocumentSnapshot successfully written" }
+                                .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
+
+                    }
                 }
             }
         } else {
@@ -200,6 +254,87 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
     }
 
+    private fun addUncollectedCoinsToMap(mapboxMap : MapboxMap){
+        //iterate over feature collection and add markers
+
+        val coinCollection  = FirebaseFirestore.getInstance().collection("uncollectedCoinz")
+        Log.d(tag, "adding uncollected coins to map from : " + coinCollection.id)
+        coinCollection.get()
+        .addOnCompleteListener ( this) {task ->
+                if (task.isSuccessful) {
+                    for (document in task.result!!) {
+                        Log.d(tag, document.id + " => " + document.data)
+                        //TODO only add if id is of correct structure and date is todays date
+                       // if (document.id.matches("\\w{4}-\\w{4}-\\w{4}-\\w{4}".toRegex())) { //might cause issues
+                            val lat = document.get("lat").toString().toDouble()
+                            val long = document.get("long").toString().toDouble()
+                            val currency = document.get("currency").toString()
+                            val symbol = document.get("symbol").toString()
+                            val snippet = document.get("snippet").toString()
+
+                            //find which icon to add
+                            val icon = findIcon(currency, symbol)
+
+                            //add marker to the map
+                            mapboxMap.addMarker(MarkerOptions()
+                                    .position(LatLng(lat, long))
+                                    .icon(icon)
+                                    .snippet(snippet))
+                      //  }
+                    }
+
+                } else {
+                    Log.d(tag, "Error getting documents: ", task.exception)
+                }
+            }
+
+
+    }
+
+//    private fun findIcon(f : Feature) : Icon {
+//        val coinSymbol = f.getStringProperty("marker-symbol")
+//        val currency = f.getStringProperty("currency")
+//
+//        val icons: TypedArray
+//        Log.d(tag, currency)
+//        if(currency == "DOLR"){//dollar - green
+//            icons = resources.obtainTypedArray(R.array.dollar_icons)
+//            Log.d(tag, "coin is dollar")
+//        } else if(currency == "PENY"){//penny - red
+//            icons = resources.obtainTypedArray(R.array.penny_icons)
+//            Log.d(tag, "coin is penny")
+//        }else if(currency == "SHIL"){//shilling - blue
+//            icons = resources.obtainTypedArray(R.array.shilling_icons)
+//            Log.d(tag, "coin is shilling")
+//        } else { icons = resources.obtainTypedArray(R.array.quid_icons) // else is quid
+//            Log.d(tag, "coin is quid")
+//        }
+//
+//        val iconFile = icons.getResourceId(Integer.parseInt(coinSymbol), 0)
+//        return IconFactory.getInstance(this).fromResource(iconFile)
+//    }
+
+    private fun findIcon(currency : String, coinSymbol : String) : Icon {
+
+        val icons: TypedArray
+
+        Log.d(tag, currency)
+        if(currency == "DOLR"){//dollar - green
+            icons = resources.obtainTypedArray(R.array.dollar_icons)
+            Log.d(tag, "coin is dollar")
+        } else if(currency == "PENY"){//penny - red
+            icons = resources.obtainTypedArray(R.array.penny_icons)
+            Log.d(tag, "coin is penny")
+        }else if(currency == "SHIL"){//shilling - blue
+            icons = resources.obtainTypedArray(R.array.shilling_icons)
+            Log.d(tag, "coin is shilling")
+        } else { icons = resources.obtainTypedArray(R.array.quid_icons) // else is quid
+            Log.d(tag, "coin is quid")
+        }
+
+        val iconFile = icons.getResourceId(Integer.parseInt(coinSymbol), 0)
+        return IconFactory.getInstance(this).fromResource(iconFile)
+    }
 
     private fun enableLocation() {
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
