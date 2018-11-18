@@ -30,6 +30,7 @@ import com.mapbox.geojson.Geometry
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.annotations.Icon
 import com.mapbox.mapboxsdk.annotations.IconFactory
+import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
@@ -48,7 +49,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener{
-
 
     private var mapView: MapView? = null
     private var map : MapboxMap? = null
@@ -88,18 +88,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         db = FirebaseFirestore.getInstance()
         userDB = db.collection("users").document(auth.uid!!)
 
+//        toolbar = supportActionBar!!
         val fab = findViewById<FloatingActionButton>(R.id.fab)
-        fab.setOnClickListener { // view ->
-//            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                    .setAction("Action", null).show()
-
-        //TODO implement signout function
+        fab.setOnClickListener {
+            //TODO implement signout function
             auth.signOut()
             skip_button.setOnClickListener {startActivity(Intent( this, LoginActivity::class.java))}
-
-        //intialise fragments here
         }
-//        toolbar = supportActionBar!!
+
         val bottomNavigation: BottomNavigationView = findViewById(R.id.navigationView)
         bottomNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
     }
@@ -107,9 +103,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.navigation_map -> {
-                toolbar.title = "Map"
-                val mapFragment = MapsFragment.newInstance()
-                openFragment(mapFragment)
+//                toolbar.title = "Map"
+                //val mapFragment = MapsFragment.newInstance()
+                //openFragment(mapFragment)
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_bank-> {
@@ -150,10 +146,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         //TODO save and restore coin style preferences
 
     }
-
-
-
-
 
     public override fun onResume() {
         super.onResume()
@@ -215,7 +207,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             val geoJsonSource = GeoJsonSource("geojson", geoJsonDataString) // create new GeoJsonSource from string json map data
             mapboxMap.addSource(geoJsonSource) // add source to the map
 
-            //get todays rates
+            //get today's rates
             getTodaysRates(geoJsonDataString)
 
             //create map on load
@@ -238,8 +230,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
     }
 
+
     private fun addFeaturesAsUncollectedCoins(featureColl : FeatureCollection){
-        featureColl
         //iterate over feature collection and add markers
         Log.d(tag, "adding feature collection coins to database")
         val features = featureColl.features()
@@ -276,6 +268,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
     }
 
+    private fun removeAllMarkers() {
+        for(marker : Marker in map!!.markers){
+            map!!.removeMarker(marker)
+        }
+    }
+
     private fun addUncollectedCoinsToMap(){
         //iterate over feature collection and add markers
 
@@ -286,22 +284,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                 if (task.isSuccessful) {
                     for (document in task.result!!) {
                         //TODO only add if id is of correct structure and date is todays date
-                       // if (document.id.matches("\\w{4}-\\w{4}-\\w{4}-\\w{4}".toRegex())) { //might cause issues
-                            val lat = document.get("lat").toString().toDouble()
-                            val long = document.get("long").toString().toDouble()
-                            val currency = document.get("currency").toString()
-                            val symbol = document.get("symbol").toString()
-                            val snippet = document.get("snippet").toString()
+                        val lat = document.get("lat").toString().toDouble()
+                        val long = document.get("long").toString().toDouble()
+                        val currency = document.get("currency").toString()
+                        val symbol = document.get("symbol").toString()
+                        val snippet = document.get("snippet").toString()
 
-                            //find which icon to add
-                            val icon = findIcon(currency, symbol)
+                        //find which icon to add
+                        val icon = findIcon(currency, symbol)
 
-                            //add marker to the map
-                            map!!.addMarker(MarkerOptions()
-                                    .position(LatLng(lat, long))
-                                    .icon(icon)
-                                    .snippet(snippet))
+                        //add marker to the map
+                        val markerOptions = MarkerOptions()
+                                .position(LatLng(lat, long))
+                                .icon(icon)
+                                .snippet(snippet)
 
+                        map!!.addMarker(markerOptions) // add the marker to the map
+                        //markerCollection.add(Marker(markerOptions)) // add marker to markerCollection to keep track off current markers on map
                     }
 
                 } else {
@@ -339,7 +338,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         return IconFactory.getInstance(this).fromResource(iconFile)
     }
 
-    fun collectCoin(coinID : String, currency : String, coinValue : Float, mapboxMap: MapboxMap) { //TODO make private??
+    private fun collectCoin(coinID : String, currency : String, coinValue : Float, mapboxMap: MapboxMap) { //TODO make private??
         Log.d(tag, "collectCoin(coinID) begins")
 
         userDB.get().addOnCompleteListener { task ->
@@ -373,7 +372,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                 Log.d(tag, "updating user coins collected with " + (size +1).toString())
                 userDB.update("dailyCoinsCollected", size + 1)
                 //5.remove coin from map
-                map!!.removeAnnotations()
+                //map!!.removeAnnotations()
+                removeAllMarkers() // remove all the current markers from the map
                 addUncollectedCoinsToMap()
             }
         }
@@ -382,15 +382,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
     private fun getRate(currency: String) : Double {
         var rate = 0.0
-        if (currency.equals("DOLR")) {
-            rate = dolrRate
-        } else if (currency.equals("PENY")) {
-            rate = penyRate
-        } else if (currency.equals("QUID")){
-            rate = quidRate
-        } else if (currency.equals("SHIL")){
-            rate = shilRate
+        when (currency) {
+            "DOLR" -> rate = dolrRate
+            "PENY" -> rate = penyRate
+            "QUID" -> rate = quidRate
+            "SHIL" -> rate = shilRate
         }
+            //Log.d(tag, String.format("exchange rate for %s is %d", currency, rate))
         //Log.d(tag, String.format("exchange rate for %s is %d", currency, rate))
         return rate
     }
@@ -401,6 +399,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
     fun setCoinStyle(s : String){
         iconStyle = s
+        Log.d(tag, "icon style is now $iconStyle")
+        removeAllMarkers()
         addUncollectedCoinsToMap()
     }
 
@@ -455,7 +455,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         val latlng = LatLng(location.latitude, location.longitude)
         map?.animateCamera(CameraUpdateFactory.newLatLng(latlng))
     }
-
+//
     override fun onLocationChanged(location: Location?) {
         if (location == null) {
             Log.d(tag, "[onLocationChanged] location is null")
@@ -467,7 +467,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
     }
 
-    fun checkCoinLocations(location: Location){
+    private fun checkCoinLocations(location: Location){
         var closeToCoin = false
         var coinID = ""
 
@@ -489,7 +489,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                             if (closeToCoin) {
                                 val currency = document.get("currency").toString()
                                 val value = (document.get("value").toString()).toFloat()
-                                Log.d(tag, "user close to coin " + coinID)
+                                Log.d(tag, "user close to coin $coinID")
                                 collectCoin(coinID, currency, value, map!!)
                                 closeToCoin = false
                             }

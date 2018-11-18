@@ -35,31 +35,18 @@ class ShopFragment : Fragment(), View.OnClickListener {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
-        val view: View = inflater!!.inflate(R.layout.fragment_shop, container, false)
+        val view: View = inflater.inflate(R.layout.fragment_shop, container, false)
 
         val button : Button = view.find(R.id.marker_style_button_original)
         button.setOnClickListener(this)
         val button2 : Button = view.find(R.id.marker_style_button_pale)
         button2.setOnClickListener(this)
-        currentStyle = (activity as MainActivity).getCoinStyle()
-//        marker_style_button_pale.setOnClickListener {
-//            if (currentStyle == "pale") {
-//                Toast.makeText(context, "Markers are already set to pale", Toast.LENGTH_SHORT).show()
-//            } else {
-//                (activity as MainActivity).setCoinStyle("pale")
-//            }
-//            marker_style_button_original.setOnClickListener {
-//                if (currentStyle == "original") {
-//                    Toast.makeText(context, "Markers are already set to original", Toast.LENGTH_SHORT).show()
-//                } else {
-//                    (activity as MainActivity).setCoinStyle("original")
-//                }
-//            }
-//        }
+
         return view
     }
 
     override fun onClick(v: View?) {
+        currentStyle = (activity as MainActivity).getCoinStyle()
         when (v?.id) {
             R.id.marker_style_button_original -> {
                 if (currentStyle == "original") {
