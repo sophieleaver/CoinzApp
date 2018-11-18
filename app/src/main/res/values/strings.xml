@@ -15,4 +15,15 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."
     </string>
+    <string name="text_map"> Map</string>
+    <string name="text_bank">Bank</string>
+    <string name="text_shop">Shop</string>
+    <string name="text_settings">Settings</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="text_set_as_coin_style">Set Style</string>
+
+
 </resources>

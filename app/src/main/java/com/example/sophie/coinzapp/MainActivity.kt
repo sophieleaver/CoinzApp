@@ -3,15 +3,19 @@ package com.example.sophie.coinzapp
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.res.TypedArray
 import android.location.Location
 import android.os.Bundle
+import android.support.design.widget.BottomNavigationView
 import android.support.design.widget.FloatingActionButton
+
+import android.support.v7.app.ActionBar
 import android.support.v7.app.AppCompatActivity
+
 import android.util.Log
 import android.view.Menu
-import android.view.MenuItem
+
 import android.view.View
+
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
 import com.mapbox.android.core.location.LocationEngine
@@ -37,19 +41,26 @@ import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
 import com.mapbox.mapboxsdk.annotations.MarkerOptions
 import kotlinx.android.synthetic.main.activity_login.*
+import org.json.JSONObject
 
 
 import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener{
-    //https://medium.com/@paul.allies/kotlin-for-android-firebase-auth-275a262d825e
-    //https://github.com/firebase/quickstart-android/blob/master/auth/app/src/main/java/com/google/firebase/quickstart/auth/kotlin/EmailPasswordActivity.kt
+
 
     private var mapView: MapView? = null
     private var map : MapboxMap? = null
     private val tag = "MainActivity"
     private lateinit var auth:  FirebaseAuth
+    private lateinit var db : FirebaseFirestore
+    private lateinit var userDB : DocumentReference
+    private var shilRate : Double = 0.0 //TODO change this to float? -> double not enough
+    private var dolrRate : Double = 0.0
+    private var quidRate : Double = 0.0
+    private var penyRate : Double = 0.0
+    private var iconStyle : String = ""
 
     private var downloadDate = "" // is in YYYY/MM/DD format
     private val todayDate = SimpleDateFormat("YYYY/MM/dd").format(Calendar.getInstance().time) // TODO change formatting of this (android studio doesnt like)
@@ -60,6 +71,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private lateinit var permissionsManager : PermissionsManager // removes code required for permissions
     private lateinit var locationEngine : LocationEngine // component that gives user location
     private lateinit var locationLayerPlugin : LocationLayerPlugin // provides location awareness to mobile - icons representation of user location
+
+    lateinit var toolbar: ActionBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,34 +85,69 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         mapView?.getMapAsync (this)
         //setSupportActionBar(toolbar)
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
+        userDB = db.collection("users").document(auth.uid!!)
+
         val fab = findViewById<FloatingActionButton>(R.id.fab)
         fab.setOnClickListener { // view ->
 //            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
 //                    .setAction("Action", null).show()
 
-            //TODO implement signout function
+        //TODO implement signout function
             auth.signOut()
             skip_button.setOnClickListener {startActivity(Intent( this, LoginActivity::class.java))}
+
+        //intialise fragments here
         }
+//        toolbar = supportActionBar!!
+        val bottomNavigation: BottomNavigationView = findViewById(R.id.navigationView)
+        bottomNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
     }
 
+    private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
+        when (item.itemId) {
+            R.id.navigation_map -> {
+                toolbar.title = "Map"
+                val mapFragment = MapsFragment.newInstance()
+                openFragment(mapFragment)
+                return@OnNavigationItemSelectedListener true
+            }
+            R.id.navigation_bank-> {
+                val bankFragment = BankFragment.newInstance()
+                openFragment(bankFragment)
+                return@OnNavigationItemSelectedListener true
+            }
+            R.id.navigation_shop -> {
+                val shopFragment = ShopFragment.newInstance()
+                openFragment(shopFragment)
+                return@OnNavigationItemSelectedListener true
+            }
+            R.id.navigation_settings -> {
+                val settingsFragment = SettingsFragment.newInstance()
+                openFragment(settingsFragment)
+                return@OnNavigationItemSelectedListener true
+            }
+        }
+        false
+    }
+    private fun openFragment(fragment: android.support.v4.app.Fragment) {
+        val transaction = supportFragmentManager.beginTransaction()
+        transaction.replace(R.id.container, fragment)
+        transaction.addToBackStack(null)
+        transaction.commit()
+    }
     @SuppressLint("MissingPermission")
     public override fun onStart() {
         super.onStart()
-//        if (PermissionsManager.areLocationPermissionsGranted(this)){
-//            locationEngine?.requestLocationUpdates()
-//            locationLayerPlugin?.onStart()
-
-
-//        }
-
-
 
         //restore user preferences
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
         downloadDate = settings.getString("lastDownloadDate", "")
         Log.d(tag, "[onStart] Recalled lastDownloadDate is '$downloadDate'")
+        iconStyle = settings.getString("lastIconStyle", "original")
+        Log.d(tag, "[onStart] Recalled lastIconStyle is '$iconStyle'")
         mapView?.onStart()
+        //TODO save and restore coin style preferences
 
     }
 
@@ -120,15 +168,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     public override fun onStop() {
         //turn off permissions on stop
         super.onStop()
-        //locationEngine?.removeLocationUpdates()
-        //        //locationLayerPlugin?.onStop()
 
         Log.d(tag, "[onStop] Storing lastDownloadDate of $downloadDate")
 
         // All objects are from android.context.Context
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
         val editor = settings.edit() // editor = makes pref changes
-        editor.putString("lastDownloadDate", downloadDate)
+        editor.putString("lastDownloadDate", todayDate)
+        editor.putString("lastIconStyle", iconStyle)
         editor.apply() // apply edits
 
         mapView!!.onStop()
@@ -168,20 +215,35 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             val geoJsonSource = GeoJsonSource("geojson", geoJsonDataString) // create new GeoJsonSource from string json map data
             mapboxMap.addSource(geoJsonSource) // add source to the map
 
+            //get todays rates
+            getTodaysRates(geoJsonDataString)
 
+            //create map on load
             val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
             addFeaturesAsUncollectedCoins(featureCollection)
-            addUncollectedCoinsToMap(mapboxMap)
+            addUncollectedCoinsToMap()
 
+
+            //when user nears a coin, remove the coin
+        }
+    }
+
+    private fun getTodaysRates(geoJsonDataString : String){
+        if (downloadDate != todayDate) {
+            val todaysRates = JSONObject(geoJsonDataString).getJSONObject("rates")
+            shilRate = todaysRates.getDouble("SHIL")
+            dolrRate = todaysRates.getDouble("DOLR")
+            quidRate = todaysRates.getDouble("QUID")
+            penyRate = todaysRates.getDouble("PENY")
         }
     }
 
     private fun addFeaturesAsUncollectedCoins(featureColl : FeatureCollection){
+        featureColl
         //iterate over feature collection and add markers
         Log.d(tag, "adding feature collection coins to database")
-        val db = FirebaseFirestore.getInstance()
         val features = featureColl.features()
-        if (features != null) {
+        if (features != null && downloadDate != todayDate) {
             for (f in features) {
                 if (f !=null) {
                     val point: Geometry? = f.geometry()
@@ -198,15 +260,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                         coin.put("value", f.getStringProperty("value"))
                         coin.put("symbol", f.getStringProperty("marker-symbol"))
                         coin.put("snippet", snippet)
-                        //coin.put("timestamp", FieldValue.serverTimestamp().toString())
 
-                        db.collection("users").document(auth.uid!!).collection("uncollectedCoins").document(f.getStringProperty("id")) // check firestore tutorial
+                        userDB.collection("uncollectedCoins").document(f.getStringProperty("id")) // check firestore tutorial
                                 .set(coin)
                                 .addOnSuccessListener { "DocumentSnapshot successfully written" }
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
                         //delete nullCoin as no longer needed
-                        db.collection("users").document(auth.uid!!).collection("uncollectedCoins").document("nullCoin").delete()
+                        userDB.collection("uncollectedCoins").document("nullCoin").delete()
                     }
                 }
             }
@@ -215,16 +276,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
     }
 
-    private fun addUncollectedCoinsToMap(mapboxMap : MapboxMap){
+    private fun addUncollectedCoinsToMap(){
         //iterate over feature collection and add markers
 
-        val coinCollection  = FirebaseFirestore.getInstance().collection("users").document(auth.uid!!).collection("uncollectedCoins")
-        Log.d(tag, "adding uncollected coins to map from : " + coinCollection.id)
+        val coinCollection  = userDB.collection("uncollectedCoins")
+        Log.d(tag, "adding uncollected coins to map")
         coinCollection.get()
         .addOnCompleteListener ( this) {task ->
                 if (task.isSuccessful) {
                     for (document in task.result!!) {
-                        Log.d(tag, document.id + " => " + document.data)
                         //TODO only add if id is of correct structure and date is todays date
                        // if (document.id.matches("\\w{4}-\\w{4}-\\w{4}-\\w{4}".toRegex())) { //might cause issues
                             val lat = document.get("lat").toString().toDouble()
@@ -237,11 +297,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                             val icon = findIcon(currency, symbol)
 
                             //add marker to the map
-                            mapboxMap.addMarker(MarkerOptions()
+                            map!!.addMarker(MarkerOptions()
                                     .position(LatLng(lat, long))
                                     .icon(icon)
                                     .snippet(snippet))
-                      //  }
+
                     }
 
                 } else {
@@ -254,25 +314,94 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
 
     private fun findIcon(currency : String, coinSymbol : String) : Icon {
+        var icons = resources.obtainTypedArray(R.array.original_quid_icons)
 
-        val icons: TypedArray
-
-        Log.d(tag, currency)
-        if(currency == "DOLR"){//dollar - green
-            icons = resources.obtainTypedArray(R.array.dollar_icons)
-            Log.d(tag, "coin is dollar")
-        } else if(currency == "PENY"){//penny - red
-            icons = resources.obtainTypedArray(R.array.penny_icons)
-            Log.d(tag, "coin is penny")
-        }else if(currency == "SHIL"){//shilling - blue
-            icons = resources.obtainTypedArray(R.array.shilling_icons)
-            Log.d(tag, "coin is shilling")
-        } else { icons = resources.obtainTypedArray(R.array.quid_icons) // else is quid
-            Log.d(tag, "coin is quid")
+        when (currency) {
+            "DOLR" -> when (iconStyle) {
+                "original" -> icons = resources.obtainTypedArray(R.array.original_dollar_icons)
+                "pale" -> icons = resources.obtainTypedArray((R.array.pale_dollar_icons))
+            }
+            "PENY" -> when (iconStyle) {
+                "original" -> icons = resources.obtainTypedArray(R.array.original_penny_icons)
+                "pale" -> icons = resources.obtainTypedArray((R.array.pale_penny_icons))
+            }
+            "SHIL" -> when (iconStyle) {
+                "original" -> icons = resources.obtainTypedArray(R.array.original_shilling_icons)
+                "pale" -> icons = resources.obtainTypedArray((R.array.pale_shilling_icons))
+            }
+            "QUID" -> when (iconStyle) {
+                "original" -> icons = resources.obtainTypedArray(R.array.original_quid_icons)
+                "pale" -> icons = resources.obtainTypedArray((R.array.pale_quid_icons))
+            }
         }
 
         val iconFile = icons.getResourceId(Integer.parseInt(coinSymbol), 0)
         return IconFactory.getInstance(this).fromResource(iconFile)
+    }
+
+    fun collectCoin(coinID : String, currency : String, coinValue : Float, mapboxMap: MapboxMap) { //TODO make private??
+        Log.d(tag, "collectCoin(coinID) begins")
+
+        userDB.get().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val document = task.result!!
+
+                val goldBeforeCoin = (document.get("goldInBank").toString().toFloat())
+                val size = Integer.parseInt(document.get("dailyCoinsCollected").toString())
+
+                Log.d(tag, "gold in bank before coin added = " + goldBeforeCoin.toString())
+                Log.d(tag, "current number of collected coins = " + Integer.toString(size))
+
+                if (size < 25) { // if there are less than 25 coins collected
+                    //1. CONVERT_COIN_TO_GOLD
+                    val rate = getRate(currency).toFloat()
+                    val coinValueInGold = rate * coinValue
+
+                    //2. ADD_GOLD_TO_BANK
+                    userDB.update("goldInBank", (goldBeforeCoin + coinValueInGold))
+                    Log.d(tag, "gold in bank after coin added = " + (goldBeforeCoin + coinValueInGold).toString())
+
+                } else {
+                    //3. else ADD_TO_WALLET
+                    val coinDoc = userDB.collection("uncollectedCoins").document(coinID).get()
+                    userDB.collection("wallet").document(coinID).set(coinDoc)
+
+
+                }
+                //4. remove coin from user uncollected coins
+                userDB.collection("uncollectedCoins").document(coinID).delete()
+                Log.d(tag, "updating user coins collected with " + (size +1).toString())
+                userDB.update("dailyCoinsCollected", size + 1)
+                //5.remove coin from map
+                map!!.removeAnnotations()
+                addUncollectedCoinsToMap()
+            }
+        }
+
+    }
+
+    private fun getRate(currency: String) : Double {
+        var rate = 0.0
+        if (currency.equals("DOLR")) {
+            rate = dolrRate
+        } else if (currency.equals("PENY")) {
+            rate = penyRate
+        } else if (currency.equals("QUID")){
+            rate = quidRate
+        } else if (currency.equals("SHIL")){
+            rate = shilRate
+        }
+        //Log.d(tag, String.format("exchange rate for %s is %d", currency, rate))
+        return rate
+    }
+
+    fun getCoinStyle() : String {
+        return iconStyle
+    }
+
+    fun setCoinStyle(s : String){
+        iconStyle = s
+        addUncollectedCoinsToMap()
     }
 
     private fun enableLocation() {
@@ -288,6 +417,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             permissionsManager.requestLocationPermissions(this)
         }
     }
+
     @SuppressWarnings("MissingPermission")
     private fun initialiseLocationEngine() {
         locationEngine = LocationEngineProvider(this).obtainBestLocationEngineAvailable()//returns location engine
@@ -320,7 +450,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
     }
 
-    private fun setCameraPosition(location: Location) {
+    private fun setCameraPosition(location: Location) { //TODO create a reset orientation/angle/location button???
         // set camera location
         val latlng = LatLng(location.latitude, location.longitude)
         map?.animateCamera(CameraUpdateFactory.newLatLng(latlng))
@@ -332,8 +462,43 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         } else {
             originLocation = location
             setCameraPosition(location) // changed from originLocation
+
+            checkCoinLocations(location)
         }
     }
+
+    fun checkCoinLocations(location: Location){
+        var closeToCoin = false
+        var coinID = ""
+
+        userDB.collection("uncollectedCoins").get()
+                .addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        for (document in task.result!!) {
+                            //TODO only add if id is of correct structure and date is todays date
+                            val lat = document.get("lat").toString().toDouble()
+                            val long = document.get("long").toString().toDouble()
+                            val coinLocation = Location("")
+                            coinLocation.latitude = lat
+                            coinLocation.longitude = long
+                            if (location.distanceTo(coinLocation) <= 25) {
+                                closeToCoin = true
+                                coinID = document.id
+                            }
+
+                            if (closeToCoin) {
+                                val currency = document.get("currency").toString()
+                                val value = (document.get("value").toString()).toFloat()
+                                Log.d(tag, "user close to coin " + coinID)
+                                collectCoin(coinID, currency, value, map!!)
+                                closeToCoin = false
+                            }
+                        }
+                    }}
+
+
+    }
+
     @SuppressWarnings("MissingPermission")
     override fun onConnected() {
         Log.d(tag, "[onConnected] requesting location updates")
@@ -360,6 +525,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         mapView!!.onSaveInstanceState(outState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -368,13 +534,4 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
 }

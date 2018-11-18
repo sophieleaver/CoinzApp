@@ -1,5 +1,5 @@
 <resources>
-    <integer-array name="dollar_icons"> //typedarrays green 00ff00
+    <integer-array name="original_dollar_icons"> //typedarrays green 00ff00
         <item>@drawable/icon0_00ff00</item>
         <item>@drawable/icon1_00ff00</item>
         <item>@drawable/icon2_00ff00</item>
@@ -12,7 +12,7 @@
         <item>@drawable/icon9_00ff00</item>
     </integer-array>
 
-    <integer-array name="penny_icons">//red ff0000
+    <integer-array name="original_penny_icons">//red ff0000
         <item>@drawable/icon0_ff0000</item>
         <item>@drawable/icon1_ff0000</item>
         <item>@drawable/icon2_ff0000</item>
@@ -24,7 +24,7 @@
         <item>@drawable/icon8_ff0000</item>
         <item>@drawable/icon9_ff0000</item>
     </integer-array>
-    <integer-array name="shilling_icons">//blue 0000ff
+    <integer-array name="original_shilling_icons">//blue 0000ff
         <item>@drawable/icon0_0000ff</item>
         <item>@drawable/icon1_0000ff</item>
         <item>@drawable/icon2_0000ff</item>
@@ -37,7 +37,7 @@
         <item>@drawable/icon9_0000ff</item>
     </integer-array>
 
-    <integer-array name="quid_icons">//yellow ffff00
+    <integer-array name="original_quid_icons">//yellow ffff00
         <item>@drawable/icon0_ffff00</item>
         <item>@drawable/icon1_ffff00</item>
         <item>@drawable/icon2_ffff00</item>
@@ -48,6 +48,57 @@
         <item>@drawable/icon7_ffff00</item>
         <item>@drawable/icon8_ffff00</item>
         <item>@drawable/icon9_ffff00</item>
+    </integer-array>
+
+    <integer-array name="pale_dollar_icons"> //typedarrays green 9ee888
+        <item>@drawable/pale_icon0_9ee888</item>S
+        <item>@drawable/pale_icon1_9ee888</item>
+        <item>@drawable/pale_icon2_9ee888</item>
+        <item>@drawable/pale_icon3_9ee888</item>
+        <item>@drawable/pale_icon4_9ee888</item>
+        <item>@drawable/pale_icon5_9ee888</item>
+        <item>@drawable/pale_icon6_9ee888</item>
+        <item>@drawable/pale_icon7_9ee888</item>
+        <item>@drawable/pale_icon8_9ee888</item>
+        <item>@drawable/pale_icon9_9ee888</item>
+    </integer-array>
+
+    <integer-array name="pale_penny_icons">//red ff0000
+        <item>@drawable/pale_icon0_ffa6a6</item>
+        <item>@drawable/pale_icon1_ffa6a6</item>
+        <item>@drawable/pale_icon2_ffa6a6</item>
+        <item>@drawable/pale_icon3_ffa6a6</item>
+        <item>@drawable/pale_icon4_ffa6a6</item>
+        <item>@drawable/pale_icon5_ffa6a6</item>
+        <item>@drawable/pale_icon6_ffa6a6</item>
+        <item>@drawable/pale_icon7_ffa6a6</item>
+        <item>@drawable/pale_icon8_ffa6a6</item>
+        <item>@drawable/pale_icon9_ffa6a6</item>
+    </integer-array>
+    <integer-array name="pale_shilling_icons">//blue 0000ff
+        <item>@drawable/pale_icon0_42dde5</item>
+        <item>@drawable/pale_icon1_42dde5</item>
+        <item>@drawable/pale_icon2_42dde5</item>
+        <item>@drawable/pale_icon3_42dde5</item>
+        <item>@drawable/pale_icon4_42dde5</item>
+        <item>@drawable/pale_icon5_42dde5</item>
+        <item>@drawable/pale_icon6_42dde5</item>
+        <item>@drawable/pale_icon7_42dde5</item>
+        <item>@drawable/pale_icon8_42dde5</item>
+        <item>@drawable/pale_icon9_42dde5</item>
+    </integer-array>
+
+    <integer-array name="pale_quid_icons">//yellow ffff00
+        <item>@drawable/pale_icon0_ffdb7a</item>
+        <item>@drawable/pale_icon1_ffdb7a</item>
+        <item>@drawable/pale_icon2_ffdb7a</item>
+        <item>@drawable/pale_icon3_ffdb7a</item>
+        <item>@drawable/pale_icon4_ffdb7a</item>
+        <item>@drawable/pale_icon5_ffdb7a</item>
+        <item>@drawable/pale_icon6_ffdb7a</item>
+        <item>@drawable/pale_icon7_ffdb7a</item>
+        <item>@drawable/pale_icon8_ffdb7a</item>
+        <item>@drawable/pale_icon9_ffdb7a</item>
 
     </integer-array>
 </resources>

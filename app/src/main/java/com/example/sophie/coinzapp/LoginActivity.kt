@@ -15,11 +15,12 @@ import kotlinx.android.synthetic.main.activity_login.*
 import kotlinx.android.synthetic.main.activity_login.fieldEmail
 import kotlinx.android.synthetic.main.activity_login.fieldPassword
 import android.support.annotation.NonNull
+import android.support.design.widget.BottomNavigationView
 import android.support.v4.app.FragmentActivity
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.firebase.firestore.DocumentReference
 import com.google.android.gms.tasks.OnSuccessListener
-
+//import kotlinx.android.synthetic.main.activity_shop.*
 
 
 /**
@@ -33,17 +34,14 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var auth:  FirebaseAuth
     private val tag = "LoginActivity"
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-
         // Set up the login form.
-
         skip_button.setOnClickListener {startActivity(Intent( this, MainActivity::class.java))}//TODO remove after debugging
-
         email_sign_in_button.setOnClickListener { signIn(fieldEmail.text.toString(), fieldPassword.text.toString())}
         email_sign_up_button.setOnClickListener { createAccount(fieldEmail.text.toString(), fieldPassword.text.toString())}
-
         auth = FirebaseAuth.getInstance()
     }
 
@@ -82,6 +80,7 @@ class LoginActivity : AppCompatActivity() {
                         userAccount.put("userID", auth.uid.toString())
                         //user.put("username", userName)
                         userAccount.put("goldInBank", 0)
+                        userAccount.put("dailyCoinsCollected",0)
 
                         val nullCoin = HashMap<String, Any?>() //this coin is so uncollectedCoins and wallet are not empty
 

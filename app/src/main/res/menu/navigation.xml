@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_map"
+        android:icon="@drawable/maps_icon"
+        android:title="Map"/>
+
+    <item
+        android:id="@+id/navigation_bank"
+        android:icon="@drawable/bank_icon"
+        android:title="Bank"/>
+
+    <item
+        android:id="@+id/navigation_shop"
+        android:icon="@drawable/shop_icon"
+        android:title="Shop"/>
+    <item
+        android:id="@+id/navigation_settings"
+        android:icon="@drawable/settings_icon"
+        android:title="Settings"/>
+
+</menu>
