@@ -1,7 +1,5 @@
 package com.example.sophie.coinzapp
 
-import android.content.Context
-import android.content.DialogInterface
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -11,8 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Toast
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.fragment_shop.*
+import kotlinx.android.synthetic.main.fragment_bank.*
 import org.jetbrains.anko.find
 
     var currentStyle = ""
@@ -22,16 +19,14 @@ class ShopFragment : Fragment(), View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
-
     }
+
     companion object {
         @JvmStatic
         fun newInstance() : ShopFragment = ShopFragment()
         val tag: String = ShopFragment::class.java.simpleName
     }
-    // ON CREATE VIEW -> callback that defines the logic and gets fragment running
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment

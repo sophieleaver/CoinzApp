@@ -14,13 +14,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.android.synthetic.main.activity_login.*
 import kotlinx.android.synthetic.main.activity_login.fieldEmail
 import kotlinx.android.synthetic.main.activity_login.fieldPassword
-import android.support.annotation.NonNull
-import android.support.design.widget.BottomNavigationView
-import android.support.v4.app.FragmentActivity
-import com.google.android.gms.tasks.OnFailureListener
-import com.google.firebase.firestore.DocumentReference
-import com.google.android.gms.tasks.OnSuccessListener
-//import kotlinx.android.synthetic.main.activity_shop.*
 
 
 /**
@@ -81,6 +74,7 @@ class LoginActivity : AppCompatActivity() {
                         //user.put("username", userName)
                         userAccount.put("goldInBank", 0)
                         userAccount.put("dailyCoinsCollected",0)
+                        userAccount.put("lastDownloadDate", "")
 
                         val nullCoin = HashMap<String, Any?>() //this coin is so uncollectedCoins and wallet are not empty
 
@@ -88,21 +82,18 @@ class LoginActivity : AppCompatActivity() {
                         //1. create new user and add to collection users
                         db.collection("users").document(auth.uid.toString()) // check firestore tutorial
                                 .set(userAccount)
-                                .addOnSuccessListener { "DocumentSnapshot successfully written" }
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
                         //2. create a collection of uncollected coins, initialised with a null coin, for the user
                         db.collection("users").document(auth.uid.toString())
                                 .collection("uncollectedCoins").document("nullCoin")
                                 .set(nullCoin)
-                                .addOnSuccessListener { "DocumentSnapshot successfully written" }
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
                         //3. create a wallet, initialised with a null coin, for the user
                         db.collection("users").document(auth.uid.toString())
                                 .collection("wallet").document("nullCoin")
                                 .set(nullCoin)
-                                .addOnSuccessListener { "DocumentSnapshot successfully written" }
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
                         //[END] create new database entry for user

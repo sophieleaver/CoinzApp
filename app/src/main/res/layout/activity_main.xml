@@ -18,73 +18,45 @@
         mapbox:mapbox_cameraZoom="15"
         mapbox:mapbox_styleUrl="mapbox://styles/mapbox/streets-v10" />
 
-    <android.support.design.widget.AppBarLayout
+    <android.support.constraint.ConstraintLayout
         android:id="@+id/appBarLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
-        <!-- SET AS MATCH PARENT, ONLY AS WRAP CONTENT FOR TEST PURPOSES-->
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="444dp"
-            android:layout_height="wrap_content"
-            android:background="?attr/colorPrimary"
-            android:elevation="4dp"
-            android:theme="@style/ToolbarTheme"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
-
-        <FrameLayout
-            android:id="@+id/container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-            <!--app:layout_behaviour="@string/appbar_scrolling_view_behaviour"/>-->
-
-
-    </android.support.design.widget.AppBarLayout>
-
-    <include
-        android:id="@+id/include"
-        layout="@layout/content_main"
-        android:layout_width="394dp"
-        android:layout_height="460dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="56dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.555"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
+        android:theme="@style/AppTheme.AppBarOverlay"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.92"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.874"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+        app:layout_constraintTop_toTopOf="parent">
+        <!-- SET AS MATCH PARENT, ONLY AS WRAP CONTENT FOR TEST PURPOSES-->
+
+        <FrameLayout
+            android:id="@+id/container"
+            android:layout_width="385dp"
+            android:layout_height="516dp" />
+        <!--app:layout_behaviour="@string/appbar_scrolling_view_behaviour"/>-->
+
+
+    </android.support.constraint.ConstraintLayout>
 
     <android.support.design.widget.BottomNavigationView
-            android:id="@+id/navigationView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="0dp"
-            android:layout_marginStart="0dp"
-            android:background="?android:attr/windowBackground"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:itemBackground="@color/black"
-            app:itemIconTint="@color/colorAccent"
-            app:itemTextColor="@color/colorAccent"
-            app:menu="@menu/navigation"/>
+        android:id="@+id/navigationView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="?android:attr/windowBackground"
+        app:itemBackground="@color/black"
+        app:itemIconTint="@color/colorAccent"
+        app:itemTextColor="@color/colorAccent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0"
+        app:menu="@menu/navigation" />
 
 </android.support.constraint.ConstraintLayout>
