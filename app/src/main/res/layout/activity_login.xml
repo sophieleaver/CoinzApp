@@ -30,7 +30,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/textInputLayout2"
+        app:layout_constraintBottom_toTopOf="@+id/fieldUsername"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -40,8 +40,8 @@
         <AutoCompleteTextView
             android:id="@+id/fieldEmail"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/prompt_email"
+            android:layout_height="match_parent"
+            android:hint="Email"
             android:inputType="textEmailAddress"
             android:maxLines="1"
             android:singleLine="true" />
@@ -63,7 +63,7 @@
         <EditText
             android:id="@+id/fieldPassword"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:hint="Password"
             android:imeActionId="6"
             android:imeActionLabel="@string/action_sign_in_short"
@@ -77,13 +77,14 @@
     <Button
         android:id="@+id/email_sign_in_button"
         style="@style/Widget.AppCompat.Button"
-        android:layout_width="367dp"
-        android:layout_height="wrap_content"
+        android:layout_width="345dp"
+        android:layout_height="47dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="148dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
         android:text="SIGN IN"
         android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -93,30 +94,34 @@
     <Button
         android:id="@+id/email_sign_up_button"
         style="@style/Widget.AppCompat.Button"
-        android:layout_width="369dp"
-        android:layout_height="wrap_content"
+        android:layout_width="343dp"
+        android:layout_height="48dp"
         android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginBottom="156dp"
         android:text="REGISTER"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/email_sign_in_button" />
-
-    <Button
-        android:id="@+id/skip_button"
-        android:layout_width="367dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:text="Skip"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/email_sign_up_button"
+        app:layout_constraintTop_toBottomOf="@+id/email_sign_in_button"
         app:layout_constraintVertical_bias="0.0" />
+
+    <EditText
+        android:id="@+id/fieldUsername"
+        android:layout_width="343dp"
+        android:layout_height="49dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:ems="10"
+        android:hint="Username"
+        android:inputType="textEmailAddress"
+        app:layout_constraintBottom_toTopOf="@+id/textInputLayout2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent" />
 
 
 </android.support.constraint.ConstraintLayout>

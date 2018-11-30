@@ -26,15 +26,16 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var auth:  FirebaseAuth
     private val tag = "LoginActivity"
-
+    private var username = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         // Set up the login form.
-        skip_button.setOnClickListener {startActivity(Intent( this, MainActivity::class.java))}//TODO remove after debugging
+
         email_sign_in_button.setOnClickListener { signIn(fieldEmail.text.toString(), fieldPassword.text.toString())}
-        email_sign_up_button.setOnClickListener { createAccount(fieldEmail.text.toString(), fieldPassword.text.toString())}
+        email_sign_up_button.setOnClickListener { createAccount(fieldEmail.text.toString(), fieldPassword.text.toString())
+                                                    username = fieldUsername.text.toString()}
         auth = FirebaseAuth.getInstance()
     }
 
@@ -70,32 +71,39 @@ class LoginActivity : AppCompatActivity() {
 
                         val userAccount = HashMap<String, Any?>()
                         val db = FirebaseFirestore.getInstance()
-                        userAccount.put("userID", auth.uid.toString())
-                        //user.put("username", userName)
+                        userAccount.put("userID", auth.uid!!)
+                        userAccount.put("username", username)
                         userAccount.put("goldInBank", 0)
                         userAccount.put("dailyCoinsCollected",0)
                         userAccount.put("lastDownloadDate", "")
 
                         val nullCoin = HashMap<String, Any?>() //this coin is so uncollectedCoins and wallet are not empty
 
-                        Log.d(tag, "create new bankaccount in database, userID = " + auth.uid.toString())
+                        Log.d(tag, "create new bankaccount in database, userID = " + auth.uid!!)
                         //1. create new user and add to collection users
-                        db.collection("users").document(auth.uid.toString()) // check firestore tutorial
+                        db.collection("users").document(auth.uid!!) // check firestore tutorial
                                 .set(userAccount)
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
                         //2. create a collection of uncollected coins, initialised with a null coin, for the user
-                        db.collection("users").document(auth.uid.toString())
+                        db.collection("users").document(auth.uid!!)
                                 .collection("uncollectedCoins").document("nullCoin")
                                 .set(nullCoin)
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
                         //3. create a wallet, initialised with a null coin, for the user
-                        db.collection("users").document(auth.uid.toString())
+                        db.collection("users").document(auth.uid!!)
                                 .collection("wallet").document("nullCoin")
                                 .set(nullCoin)
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
+                        val nullUser = HashMap<String, Any>()
+                        nullUser.put("username", "")
+
+                        db.collection("users").document(auth.uid!!)
+                                .collection("friends").document("nullUser")
+                                .set(nullUser)
+                                .addOnFailureListener{e -> Log.w(tag, "Error adding document", e)}
                         //[END] create new database entry for user
 
                     } else {

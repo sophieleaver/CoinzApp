@@ -31,7 +31,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity
+            android:name=".SendingActivity"
+            android:label="@string/title_activity_sending"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

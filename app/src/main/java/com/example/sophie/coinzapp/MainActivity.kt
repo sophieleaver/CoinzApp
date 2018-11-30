@@ -92,7 +92,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.navigation_map -> {
-//                toolbar.title = "Map"
                 val mapFragment = MapsFragment.newInstance()
                 openFragment(mapFragment)
                 return@OnNavigationItemSelectedListener true
@@ -145,8 +144,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             val geoJsonSource = GeoJsonSource("geojson", geoJsonDataString) // create new GeoJsonSource from string json map data
             mapboxMap.addSource(geoJsonSource) // add source to the map
 
-
-
             //create map on load
             //get the date a map was last downloaded from the users account
             userDB.get().addOnCompleteListener { task ->
@@ -158,6 +155,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
                     if (lastDownloadDate != "" && lastDownloadDate != todayDate){ //if a map HAS been downloaded previously, delete it
                         removeOldCoinsFromDatabase()
+                        val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
+                        addFeaturesAsUncollectedCoins(featureCollection)
+
                     } else if( lastDownloadDate != todayDate){ //
 
                         val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
@@ -182,12 +182,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                 .addOnCompleteListener ( this) {task ->
                     if (task.isSuccessful) {
                         for (document in task.result!!) {
-                            coinCollection.document(document.id).delete()
+                            if (document.id != "nullCoin") {
+                                coinCollection.document(document.id).delete()
+                            }
                         }
                     } else {
                         Log.d(tag, "Error getting documents: ", task.exception)
                     }
                 }
+
     }
 
     private fun addFeaturesAsUncollectedCoins(featureColl : FeatureCollection){
@@ -217,7 +220,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                                 .addOnSuccessListener { "DocumentSnapshot successfully written" }
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
-                        userDB.collection("uncollectedCoins").document("nullCoin").delete() //delete the null coin that the collection is initalised with (if it exists)
+                        //userDB.collection("uncollectedCoins").document("nullCoin").delete() //delete the null coin that the collection is initalised with (if it exists)
                     }
                 }
             }
@@ -239,27 +242,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         //iterate over feature collection and add markers
 
         val coinCollection  = userDB.collection("uncollectedCoins")
-        Log.d(tag, "adding uncollected coins to map")
+
         coinCollection.get()
         .addOnCompleteListener ( this) {task ->
                 if (task.isSuccessful) {
+                    Log.d(tag, "adding uncollected coins to map")
                     for (document in task.result!!) {
-                        //TODO only add if id is of correct structure and date is todays date
-                        val lat = document.get("lat").toString().toDouble()
-                        val long = document.get("long").toString().toDouble()
-                        val currency = document.get("currency").toString()
-                        val symbol = document.get("symbol").toString()
-                        val snippet = document.get("snippet").toString()
+                        if (document.id != "nullCoin") {
+                            //TODO only add if id is of correct structure and date is todays date
+                            val lat = document.get("lat").toString().toDouble()
+                            val long = document.get("long").toString().toDouble()
+                            val currency = document.get("currency").toString()
+                            val symbol = document.get("symbol").toString()
+                            val snippet = document.get("snippet").toString()
 
-                        //find which icon to add
-                        val icon = findIcon(currency, symbol)
+                            //find which icon to add
+                            val icon = findIcon(currency, symbol)
 
-                        map!!.addMarker(MarkerOptions()
-                                .position(LatLng(lat, long))
-                                .icon(icon)
-                                .snippet(snippet)) // add the marker to the map
+                            map!!.addMarker(MarkerOptions()
+                                    .position(LatLng(lat, long))
+                                    .icon(icon)
+                                    .snippet(snippet)) // add the marker to the map
 
-                    }
+                        }}
                 } else {
                     Log.d(tag, "Error getting documents: ", task.exception)
                 }
