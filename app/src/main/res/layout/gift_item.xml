@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardCornerRadius="4dp">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="45dp"
+        android:layout_margin="4dp">
+
+        <ImageView
+            android:id="@+id/presentImage"
+            android:layout_width="46dp"
+            android:layout_height="match_parent"
+            android:padding="2dp"
+            android:src="@drawable/present_icon"/>
+
+        <TextView
+            android:id="@+id/textViewGift"
+            android:layout_width="182dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="7dp"
+            android:layout_marginTop="10dp"
+            android:layout_toEndOf="@+id/presentImage"
+            android:text="Mystery Coin"
+            android:textColor="@android:color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+
+        <Button
+            android:id="@+id/button_view_coin"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="1dp"
+            android:layout_marginEnd="11dp"
+            android:text="VIEW"
+            android:textSize="18sp" />
+    </RelativeLayout>
+</android.support.v7.widget.CardView>

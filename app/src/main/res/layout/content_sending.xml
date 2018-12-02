@@ -10,7 +10,7 @@
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerView_friends"
-        android:layout_width="344dp"
+        android:layout_width="400dp"
         android:layout_height="388dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
@@ -18,10 +18,10 @@
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.764"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView6"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintVertical_bias="0.8" />
 
     <TextView
         android:id="@+id/textView6"
@@ -34,7 +34,6 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Button"
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.916"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -52,7 +51,7 @@
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.099" />
+        app:layout_constraintVertical_bias="0.181" />
 
     <EditText
         android:id="@+id/fieldUsername"
@@ -61,15 +60,15 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
         android:ems="10"
+        android:hint="Enter username"
         android:inputType="textPersonName"
-        android:text="Username"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/button_add_friend"
+        app:layout_constraintHorizontal_bias="0.507"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.121" />
+        app:layout_constraintVertical_bias="0.191" />
 
     <Button
         android:id="@+id/button_back_to_main"
@@ -83,8 +82,8 @@
         android:textColor="@color/white"
         app:layout_constraintBottom_toTopOf="@+id/fieldUsername"
         app:layout_constraintEnd_toStartOf="@+id/textView6"
-        app:layout_constraintHorizontal_bias="0.571"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.571" />
+        app:layout_constraintVertical_bias="0.137" />
 </android.support.constraint.ConstraintLayout>

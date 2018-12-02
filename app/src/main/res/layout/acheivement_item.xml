@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardCornerRadius="4dp">
+
+    <RelativeLayout
+        android:id="@+id/achievement_container"
+        android:layout_width="355dp"
+        android:layout_height="82dp"
+        android:layout_margin="4dp"
+        android:background="@color/unachieved">
+
+        <TextView
+            android:id="@+id/text_achievement_name"
+            android:layout_width="339dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="7dp"
+            android:layout_marginTop="10dp"
+            android:layout_toEndOf="@+id/presentImage"
+            android:text="Achievement"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+
+        <TextView
+            android:id="@+id/text_achievement_description"
+            android:layout_width="239dp"
+            android:layout_height="29dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="46dp"
+            android:layout_marginEnd="108dp"
+            android:layout_marginBottom="7dp"
+            android:text="Achievement Description"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/text_achievement_status"
+            android:layout_width="97dp"
+            android:layout_height="26dp"
+            android:layout_alignBottom="@+id/text_achievement_description"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="251dp"
+            android:layout_marginTop="46dp"
+            android:layout_marginEnd="7dp"
+            android:layout_marginBottom="3dp"
+            android:text="Acheived!"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+    </RelativeLayout>
+</android.support.v7.widget.CardView>

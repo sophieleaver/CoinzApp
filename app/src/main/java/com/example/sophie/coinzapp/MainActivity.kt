@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.Menu
 
 import android.view.View
+import android.widget.Toast
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
@@ -44,6 +45,22 @@ import org.json.JSONObject
 
 import java.text.SimpleDateFormat
 import java.util.*
+//Coin Exchange Rates
+var shilRate : Double = 0.0
+var dolrRate : Double = 0.0
+var quidRate : Double = 0.0
+var penyRate : Double = 0.0
+
+fun getCoinExchangeRate(currency: String) : Double {
+    var rate = 0.0
+    when (currency) {
+        "DOLR" -> rate = dolrRate
+        "PENY" -> rate = penyRate
+        "QUID" -> rate = quidRate
+        "SHIL" -> rate = shilRate
+    }
+    return rate
+}
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener{
     //mapbox and location variables
@@ -57,11 +74,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private lateinit var auth:  FirebaseAuth
     private lateinit var db : FirebaseFirestore
     private lateinit var userDB : DocumentReference
-    //Coin Exchange Rates
-    private var shilRate : Double = 0.0 //TODO change this to float? -> double not enough
-    private var dolrRate : Double = 0.0
-    private var quidRate : Double = 0.0
-    private var penyRate : Double = 0.0
+    private lateinit var username : String
+
     //other variables
     private val tag = "MainActivity"
     private var iconStyle : String = ""
@@ -84,6 +98,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
         userDB = db.collection("users").document(auth.uid!!)
+        userDB.get().addOnCompleteListener{ task ->
+            if (task.isSuccessful){
+                username = task.result!!.get("username").toString()
+                Log.d(tag,"username found $username")
+            }
+
+        }
 
         val bottomNavigation: BottomNavigationView = findViewById(R.id.navigationView)
         bottomNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
@@ -92,7 +113,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.navigation_map -> {
-                val mapFragment = MapsFragment.newInstance()
+                val mapFragment = MapsFragment.newInstance(shilRate,dolrRate,quidRate,penyRate)
                 openFragment(mapFragment)
                 return@OnNavigationItemSelectedListener true
             }
@@ -107,7 +128,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_settings -> {
-                val settingsFragment = SettingsFragment.newInstance()
+                val settingsFragment = SettingsFragment.newInstance(username)
                 openFragment(settingsFragment)
                 return@OnNavigationItemSelectedListener true
             }
@@ -154,27 +175,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                     Log.d(tag, "last download date = $lastDownloadDate, today date = $todayDate")
 
                     if (lastDownloadDate != "" && lastDownloadDate != todayDate){ //if a map HAS been downloaded previously, delete it
-                        removeOldCoinsFromDatabase()
+
                         val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
-                        addFeaturesAsUncollectedCoins(featureCollection)
+                        removeCoinsAndDownloadNewMap(featureCollection)
 
                     } else if( lastDownloadDate != todayDate){ //
 
                         val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
                         addFeaturesAsUncollectedCoins(featureCollection)
 
-                        //set todays coin exchange rates
-                        setDailyExchangeRates(geoJsonDataString)
                     } else { //if the map has already been downloaded today, download the coins that have not been collected
                         addUncollectedCoinsToMap()
                     }
                 }
             }
+            setDailyExchangeRates(geoJsonDataString)
+            //once exchange rates have been set, set them in map fragment
+            Log.d(tag, "opening mapfragment now")
+            openFragment(MapsFragment.newInstance(shilRate,dolrRate,quidRate,penyRate))
 
         }
+
     }
 
-    private fun removeOldCoinsFromDatabase(){
+    private fun removeCoinsAndDownloadNewMap(featureCollection: FeatureCollection){
         //remove all the uncollected coins from the users database
         userDB.update("dailyCoinsCollected",0) // TODO check this works
         val coinCollection  = userDB.collection("uncollectedCoins")
@@ -186,6 +210,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                                 coinCollection.document(document.id).delete()
                             }
                         }
+                        //add the new coins to the database
+                        addFeaturesAsUncollectedCoins(featureCollection)
                     } else {
                         Log.d(tag, "Error getting documents: ", task.exception)
                     }
@@ -227,8 +253,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         } else {
             Log.d(tag, "ERROR, feature list is null")
         }
-        addUncollectedCoinsToMap()
         userDB.update("lastDownloadDate", todayDate) // set the user's date of last map download to today
+        addUncollectedCoinsToMap()
+
 
     }
 
@@ -280,18 +307,26 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             "DOLR" -> when (iconStyle) {
                 "original" -> icons = resources.obtainTypedArray(R.array.original_dollar_icons)
                 "pale" -> icons = resources.obtainTypedArray((R.array.pale_dollar_icons))
+                "party"-> icons = resources.obtainTypedArray(R.array.party_dollar_icons)
+                "dark"-> icons = resources.obtainTypedArray(R.array.dark_dollar_icons)
             }
             "PENY" -> when (iconStyle) {
                 "original" -> icons = resources.obtainTypedArray(R.array.original_penny_icons)
                 "pale" -> icons = resources.obtainTypedArray((R.array.pale_penny_icons))
+                "party"-> icons = resources.obtainTypedArray(R.array.party_penny_icons)
+                "dark"-> icons = resources.obtainTypedArray(R.array.dark_penny_icons)
             }
             "SHIL" -> when (iconStyle) {
                 "original" -> icons = resources.obtainTypedArray(R.array.original_shilling_icons)
                 "pale" -> icons = resources.obtainTypedArray((R.array.pale_shilling_icons))
+                "party"-> icons = resources.obtainTypedArray(R.array.party_shilling_icons)
+                "dark"-> icons = resources.obtainTypedArray(R.array.dark_shilling_icons)
             }
             "QUID" -> when (iconStyle) {
                 "original" -> icons = resources.obtainTypedArray(R.array.original_quid_icons)
                 "pale" -> icons = resources.obtainTypedArray((R.array.pale_quid_icons))
+                "party"-> icons = resources.obtainTypedArray(R.array.party_quid_icons)
+                "dark"-> icons = resources.obtainTypedArray(R.array.dark_quid_icons)
             }
         }
 
@@ -312,8 +347,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
                 if (size <= 25) { // if there are less than 25 coins collected...
                     //...convert the coin to gold
-                    val rate = getCoinExchangeRate(currency).toFloat()
-                    val coinValueInGold = rate * coinValue
+
+                    val coinValueInGold = convertCoinToGold(currency, coinValue)
 
                     //... and add the total exchanged coin's gold total to the users gold total
                     userDB.update("goldInBank", (goldBeforeCoin + coinValueInGold))
@@ -334,13 +369,53 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                 Log.d(tag, "updating user coins collected with " + (size +1).toString())
                 userDB.update("dailyCoinsCollected", size + 1)
 
-                // remove the collected coin from map
+                val totalCoins = Integer.parseInt(task.result!!.get("totalCoinsCollected").toString())
+                userDB.update("totalCoinsCollected", totalCoins + 1)
+                checkForCoinAchievements()
 
+                // remove the collected coin from map
                 removeAllMarkers() // remove all the current markers from the map
                 addUncollectedCoinsToMap() //re-add all the uncollected coins stored in the database to the map
             }
         }
 
+    }
+
+    private fun checkForCoinAchievements() {
+
+        userDB.get().addOnCompleteListener{task ->
+            if (task.isSuccessful){
+                val coinsCollected = Integer.parseInt(task.result!!.get("totalCoinsCollected").toString())
+
+                val newAchievement = coinsCollected == 1 || coinsCollected == 100 || coinsCollected == 1000
+                Log.d(tag, "achievement: accessing user successful, total coins collected $coinsCollected, new achievement is $newAchievement")
+                if (newAchievement) {
+                    var achievement = ""
+
+                    when (coinsCollected) {
+                        1 -> achievement = "coinsCollected_BFC"//baby'sfirst coin
+                        100 -> achievement = "coinsCollected_CE"//coin enthusiast
+                        1000 -> achievement = "coinsCollected_RoAE" //root of all evil
+                    }
+                    Log.d(tag, "updating achievement $achievement")
+
+                    userDB.collection("achievements").document(achievement)
+                            .update("status", true).addOnFailureListener { task ->
+                                Log.d(tag, "achievement update failed!")
+                            }
+
+                    Toast.makeText(this, "New Achievement!", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+        }
+    }
+
+
+    public fun convertCoinToGold(currency : String, value : Float) : Float{
+        val rate = getCoinExchangeRate(currency).toFloat()
+        val gold = rate * value
+        return gold
     }
 
     private fun setDailyExchangeRates(geoJsonDataString : String) {
@@ -352,16 +427,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         penyRate = todaysRates.getDouble("PENY")
     }
 
-    private fun getCoinExchangeRate(currency: String) : Double {
-        var rate = 0.0
-        when (currency) {
-            "DOLR" -> rate = dolrRate
-            "PENY" -> rate = penyRate
-            "QUID" -> rate = quidRate
-            "SHIL" -> rate = shilRate
-        }
-        return rate
-    }
+
 
     override fun onLocationChanged(location: Location?) {
         if (location == null) {

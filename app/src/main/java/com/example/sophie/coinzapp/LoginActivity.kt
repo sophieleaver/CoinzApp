@@ -10,6 +10,7 @@ import android.util.Log
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.android.synthetic.main.activity_login.*
 import kotlinx.android.synthetic.main.activity_login.fieldEmail
@@ -74,36 +75,20 @@ class LoginActivity : AppCompatActivity() {
                         userAccount.put("userID", auth.uid!!)
                         userAccount.put("username", username)
                         userAccount.put("goldInBank", 0)
+                        userAccount.put("totalGoldSpent", 0)
                         userAccount.put("dailyCoinsCollected",0)
+                        userAccount.put("totalCoinsCollected",0)
+                        userAccount.put("totalCoinsSent",0)
                         userAccount.put("lastDownloadDate", "")
 
-                        val nullCoin = HashMap<String, Any?>() //this coin is so uncollectedCoins and wallet are not empty
 
+                        val userDB = db.collection("users").document(auth.uid!!)
                         Log.d(tag, "create new bankaccount in database, userID = " + auth.uid!!)
-                        //1. create new user and add to collection users
-                        db.collection("users").document(auth.uid!!) // check firestore tutorial
-                                .set(userAccount)
-                                .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
-                        //2. create a collection of uncollected coins, initialised with a null coin, for the user
-                        db.collection("users").document(auth.uid!!)
-                                .collection("uncollectedCoins").document("nullCoin")
-                                .set(nullCoin)
-                                .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
+                        //create new user and add to collection users
+                        userDB.set(userAccount).addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
+                        initialiseUserDatabaseVariables(userDB)
 
-                        //3. create a wallet, initialised with a null coin, for the user
-                        db.collection("users").document(auth.uid!!)
-                                .collection("wallet").document("nullCoin")
-                                .set(nullCoin)
-                                .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
-
-                        val nullUser = HashMap<String, Any>()
-                        nullUser.put("username", "")
-
-                        db.collection("users").document(auth.uid!!)
-                                .collection("friends").document("nullUser")
-                                .set(nullUser)
-                                .addOnFailureListener{e -> Log.w(tag, "Error adding document", e)}
                         //[END] create new database entry for user
 
                     } else {
@@ -192,5 +177,72 @@ class LoginActivity : AppCompatActivity() {
         if (user != null) {
             startActivity(Intent( this, MainActivity::class.java))
         }
+    }
+    private fun initialiseUserDatabaseVariables(userDB :DocumentReference){
+        val nullCoin = HashMap<String, Any?>() //this coin is so uncollectedCoins and wallet are not empty
+
+        //create a collection of uncollected coins, initialised with a null coin, for the user
+        userDB.collection("uncollectedCoins").document("nullCoin")
+                .set(nullCoin)
+                .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
+
+        //create a wallet, initialised with a null coin, for the user
+        userDB.collection("wallet").document("nullCoin")
+                .set(nullCoin)
+                .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
+
+        val nullUser = HashMap<String, Any>()
+        nullUser.put("username", "")
+
+        userDB.collection("friends").document("nullUser")
+                .set(nullUser)
+                .addOnFailureListener{e -> Log.w(tag, "Error adding document", e)}
+
+        userDB.collection("unacceptedCoins").document("nullCoin")
+                .set(nullCoin)
+                .addOnFailureListener{e -> Log.w(tag, "Error adding nullCoin to unacceptedCoins", e)}
+        setPurchased(userDB)
+        setAchievements(userDB)
+    }
+    private fun setPurchased(userDB : DocumentReference){
+        val coinThemePurchaseFalse = HashMap<String, Any>()
+        coinThemePurchaseFalse.put("purchased", false)
+
+        val coinThemePurchaseTrue = HashMap<String, Any>()
+        coinThemePurchaseFalse.put("purchased", true)
+
+        val purchases = userDB.collection("purchases")
+
+        // set original coin theme as purchased as it is free
+        purchases.document("original").set(coinThemePurchaseTrue)
+        //set other coin themes as unpurchased
+        purchases.document("dark").set(coinThemePurchaseFalse)
+        purchases.document("pale").set(coinThemePurchaseFalse)
+        purchases.document("party").set(coinThemePurchaseFalse)
+
+    }
+
+    private fun setAchievements(userDB : DocumentReference){
+        val achievement = HashMap<String, Any>()
+        achievement.put("status", false)
+
+        userDB.collection("achievements").document("coinsCollected_BFC") // baby's first coin
+                .set(achievement)
+        userDB.collection("achievements").document("coinsCollected_CE") // coin enthusiast
+                .set(achievement)
+        userDB.collection("achievements").document("coinsCollected_RoAE") //root of all evil
+                .set(achievement)
+        userDB.collection("achievements").document("coinsGiven_F") //frugal
+                .set(achievement)
+        userDB.collection("achievements").document("coinsGiven_KS") // kind soul
+                .set(achievement)
+        userDB.collection("achievements").document("coinsGiven_MT") // mother theresa
+                .set(achievement)
+        userDB.collection("achievements").document("goldSpent_CC") // cha ching
+                .set(achievement)
+        userDB.collection("achievements").document("goldSpent_HBS") // hey big spender
+                .set(achievement)
+        userDB.collection("achievements").document("goldSpent_SS") // splish splash there goes my cash
+                .set(achievement)
     }
 }

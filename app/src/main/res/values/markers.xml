@@ -101,4 +101,107 @@
         <item>@drawable/pale_icon9_ffdb7a</item>
 
     </integer-array>
+
+    <integer-array name="dark_dollar_icons"> //typedarrays green 9ee888
+        <item>@drawable/dark_icon0_0f571f</item>
+        <item>@drawable/dark_icon1_0f571f</item>
+        <item>@drawable/dark_icon2_0f571f</item>
+        <item>@drawable/dark_icon3_0f571f</item>
+        <item>@drawable/dark_icon4_0f571f</item>
+        <item>@drawable/dark_icon5_0f571f</item>
+        <item>@drawable/dark_icon6_0f571f</item>
+        <item>@drawable/dark_icon7_0f571f</item>
+        <item>@drawable/dark_icon8_0f571f</item>
+        <item>@drawable/dark_icon9_0f571f</item>
+    </integer-array>
+
+    <integer-array name="dark_penny_icons">//red ff0000
+        <item>@drawable/dark_icon0_cc1b1a</item>
+        <item>@drawable/dark_icon1_cc1b1a</item>
+        <item>@drawable/dark_icon2_cc1b1a</item>
+        <item>@drawable/dark_icon3_cc1b1a</item>
+        <item>@drawable/dark_icon4_cc1b1a</item>
+        <item>@drawable/dark_icon5_cc1b1a</item>
+        <item>@drawable/dark_icon6_cc1b1a</item>
+        <item>@drawable/dark_icon7_cc1b1a</item>
+        <item>@drawable/dark_icon8_cc1b1a</item>
+        <item>@drawable/dark_icon9_cc1b1a</item>
+    </integer-array>
+    <integer-array name="dark_shilling_icons">//blue 0000ff
+        <item>@drawable/dark_icon0_2b2f78</item>
+        <item>@drawable/dark_icon1_2b2f78</item>
+        <item>@drawable/dark_icon2_2b2f78</item>
+        <item>@drawable/dark_icon3_2b2f78</item>
+        <item>@drawable/dark_icon4_2b2f78</item>
+        <item>@drawable/dark_icon5_2b2f78</item>
+        <item>@drawable/dark_icon6_2b2f78</item>
+        <item>@drawable/dark_icon7_2b2f78</item>
+        <item>@drawable/dark_icon8_2b2f78</item>
+        <item>@drawable/dark_icon9_2b2f78</item>
+    </integer-array>
+
+    <integer-array name="dark_quid_icons">//yellow ffff00
+        <item>@drawable/dark_icon0_e58f00</item>
+        <item>@drawable/dark_icon1_e58f00</item>
+        <item>@drawable/dark_icon2_e58f00</item>
+        <item>@drawable/dark_icon3_e58f00</item>
+        <item>@drawable/dark_icon4_e58f00</item>
+        <item>@drawable/dark_icon5_e58f00</item>
+        <item>@drawable/dark_icon6_e58f00</item>
+        <item>@drawable/dark_icon7_e58f00</item>
+        <item>@drawable/dark_icon8_e58f00</item>
+        <item>@drawable/dark_icon9_e58f00</item>
+    </integer-array>
+
+    <integer-array name="party_dollar_icons"> //typedarrays green 9ee888
+        <item>@drawable/party_icon0_teal</item>
+        <item>@drawable/party_icon1_teal</item>
+        <item>@drawable/party_icon2_teal</item>
+        <item>@drawable/party_icon3_teal</item>
+        <item>@drawable/party_icon4_teal</item>
+        <item>@drawable/party_icon5_teal</item>
+        <item>@drawable/party_icon6_teal</item>
+        <item>@drawable/party_icon7_teal</item>
+        <item>@drawable/party_icon8_teal</item>
+        <item>@drawable/party_icon9_teal</item>
+    </integer-array>
+
+    <integer-array name="party_penny_icons">//red ff0000
+        <item>@drawable/party_icon0_pink</item>
+        <item>@drawable/party_icon1_pink</item>
+        <item>@drawable/party_icon2_pink</item>
+        <item>@drawable/party_icon3_pink</item>
+        <item>@drawable/party_icon4_pink</item>
+        <item>@drawable/party_icon5_pink</item>
+        <item>@drawable/party_icon6_pink</item>
+        <item>@drawable/party_icon7_pink</item>
+        <item>@drawable/party_icon8_pink</item>
+        <item>@drawable/party_icon9_pink</item>
+    </integer-array>
+    <integer-array name="party_shilling_icons">//blue 0000ff
+        <item>@drawable/party_icon0_purple</item>
+        <item>@drawable/party_icon1_purple</item>
+        <item>@drawable/party_icon2_purple</item>
+        <item>@drawable/party_icon3_purple</item>
+        <item>@drawable/party_icon4_purple</item>
+        <item>@drawable/party_icon5_purple</item>
+        <item>@drawable/party_icon6_purple</item>
+        <item>@drawable/party_icon7_purple</item>
+        <item>@drawable/party_icon8_purple</item>
+        <item>@drawable/party_icon9_purple</item>
+    </integer-array>
+
+    <integer-array name="party_quid_icons">//yellow ffff00
+        <item>@drawable/party_icon0_orange</item>
+        <item>@drawable/party_icon1_orange</item>
+        <item>@drawable/party_icon2_orange</item>
+        <item>@drawable/party_icon3_orange</item>
+        <item>@drawable/party_icon4_orange</item>
+        <item>@drawable/party_icon5_orange</item>
+        <item>@drawable/party_icon6_orange</item>
+        <item>@drawable/party_icon7_orange</item>
+        <item>@drawable/party_icon8_orange</item>
+        <item>@drawable/party_icon9_orange</item>
+    </integer-array>
+
 </resources>

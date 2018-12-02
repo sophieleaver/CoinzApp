@@ -14,12 +14,15 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QueryDocumentSnapshot
 
 import kotlinx.android.synthetic.main.activity_sending.*
-import kotlinx.android.synthetic.main.coin_item.view.*
 import kotlinx.android.synthetic.main.content_sending.*
 import kotlinx.android.synthetic.main.user_item.view.*
 import org.jetbrains.anko.find
+    var coinCurrency : String = ""
+    var coinValue : String = ""
+    var coinID : String = ""
 
 class SendingActivity : AppCompatActivity(), View.OnClickListener {
 
@@ -28,9 +31,16 @@ class SendingActivity : AppCompatActivity(), View.OnClickListener {
     private var tag = "SendingActivity"
     val users = ArrayList<User_Details>()
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sending)
+
+        coinCurrency = intent.extras.getString("currency")
+        coinValue = intent.extras.getString("value")
+        coinID = intent.extras.getString("id")
+        Log.d(tag, "sending coin of currency $coinCurrency and value $coinValue")
+
         setSupportActionBar(toolbar)
 
         //set listeners for buttons
@@ -71,41 +81,7 @@ class SendingActivity : AppCompatActivity(), View.OnClickListener {
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.button_add_friend -> { // when you click the add friend button, it adds a new friend to the data base
-                val enteredUsername = fieldUsername.text.toString()
-                //check new friend exists:
-                //iterate over user database until find a matching username
-                //TODO is there a way to break when you find it? -> maybe just access directly????
-                db.collection("users").get().addOnCompleteListener{ task ->
-                    if (task.isSuccessful!!){
-                        var foundUser = false
-                        for (document in task.result!!){
-                            Log.d(tag, "user ${document.get("username")} is being tested")
-                            if (document.get("username") == enteredUsername){ // cant be own username
-                                foundUser = true
-                                if(document.get("userID") != userDB.id) {
-                                    Log.d(tag, "user ${document.get("username")} is being added to friend list")
-                                    val newUser = HashMap<String, Any>()
-                                    newUser.put("username", enteredUsername)
-                                    userDB.collection("friends").document(enteredUsername)
-                                            .set(newUser)
-
-                                    users.add(User_Details(document.get("username").toString()))
-
-
-                                } else {
-                                    Toast.makeText(this,"You have entered your own username, please re-enter", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                        if (!foundUser){
-                            Toast.makeText(this, "Username not found, please re-enter", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-
-                }
-                //then it updates the recyclerview
-
-
+                addNewFriend()
             }
             R.id.button_back_to_main -> {
                 Log.d(tag, "back to main button pressed")
@@ -113,33 +89,60 @@ class SendingActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
     }
+
+    fun addNewFriend(){
+
+        val enteredUsername = fieldUsername.text.toString()
+
+        //iterate over user database until find a matching username
+        db.collection("users").get().addOnCompleteListener{ task ->
+            if (task.isSuccessful!!){
+
+                var foundUser = false // boolean : returns true if a user of specified username exists
+
+                for (document in task.result!!){
+
+                    Log.d(tag, "user ${document.get("username")} is being tested")
+                    if (document.get("username") == enteredUsername){
+                        foundUser = true
+                        val usernameBelongsToCurrentUser = document.get("userID") == userDB.id
+                            if(!usernameBelongsToCurrentUser) {
+                                addUsernameToFriendsDatabase(document, enteredUsername)
+                            } else {
+                                Toast.makeText(this,"You have entered your own username, please re-enter", Toast.LENGTH_SHORT).show()
+                            }
+
+                    }
+                }
+                if (!foundUser){ // if a user of specified username was not found
+                    Toast.makeText(this, "User not found, please re-enter", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun addUsernameToFriendsDatabase(document : QueryDocumentSnapshot, enteredUsername : String){
+        //if already has user as friend, return notification
+        if(users.contains(User_Details(document.get("username").toString()))){
+            Toast.makeText(this, "User is already in friend list", Toast.LENGTH_SHORT).show()
+        }
+        //else add them to friend list
+        else {
+            Log.d(tag, "user ${document.get("username")} is being added to friend list")
+            val newUser = HashMap<String, Any>()
+            newUser.put("username", enteredUsername)
+            userDB.collection("friends").document(enteredUsername)
+                    .set(newUser)
+
+            users.add(User_Details(document.get("username").toString()))
+            fieldUsername.text.clear() // clear entered username
+        }
+    }
+
 }
 
-
-
-//        userDB.collection("wallet").addSnapshotListener { queryDocumentSnapshots, e ->
-//
-//            if (e != null) {
-//                Log.d(fragTag, "Error: ${e.message}")
-//            }
-//
-//            for (doc in queryDocumentSnapshots!!.documentChanges) {
-//                if (doc.type == DocumentChange.Type.ADDED){
-//                    val currency = doc.document.get("currency")
-//                    Log.d(fragTag, " coin added : currency is $currency")
-//                    coins.add(Coin_Details(doc.document.get("currency").toString(), doc.document.get("value").toString(), R.drawable.icon0_ffff00))
-//
-//
-//                }
-//                if (doc.type == DocumentChange.Type.REMOVED){
-//                    val currency = doc.document.get("currency")
-//                    Log.d(fragTag, " coin removed : currency is $currency")
-//                    coins.remove(Coin_Details(doc.document.get("currency").toString(), doc.document.get("value").toString(), R.drawable.icon0_ffff00))
-//
-//
-//                }
-
-
+//--------------------------------- end of SendingActivity.kt -----------
+//---------------------------------start of User Details class ----------
 data class User_Details(val name:String)
 
 class CustomAdapter(val userList: ArrayList<User_Details>) : RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
@@ -164,8 +167,64 @@ class CustomAdapter(val userList: ArrayList<User_Details>) : RecyclerView.Adapte
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         fun bindItems(user: User_Details) {
-            itemView.imageView.button_send_coin_to_user.setOnClickListener{
-                //send coin to
+            val auth = FirebaseAuth.getInstance()
+            itemView.usernameView.text=user.name
+            itemView.button_send_coin_to_user.setOnClickListener{
+                //when button clicked, the coin is added to users unaccepted coin database
+                val userDB = FirebaseFirestore.getInstance().collection("users")
+                userDB.get().addOnCompleteListener{  task ->
+                        if (task.isSuccessful){
+                            for (document in task.result!!){
+                                if (document.get("username") == user.name){
+                                    Toast.makeText(itemView.context, "sending coin...", Toast.LENGTH_SHORT).show()
+                                    //add the sent coin to the "friends" unaccepted coins database collection
+
+                                    val sentCoin = HashMap<String, Any>()
+                                    sentCoin.put("currency", coinCurrency)
+                                    sentCoin.put("value", coinValue)
+
+                                    userDB.document(document.id).collection("unacceptedCoins").add(sentCoin)
+
+                                    //remove coin from current users wallet
+                                    userDB.document(auth.uid!!).collection("wallet").document(coinID).delete()
+                                    checkForAchievements() //TODO increase sent coins by 1 when coin is sent
+                                    //return back to main activity
+                                    itemView.context.startActivity(Intent(itemView.context, MainActivity::class.java))
+                                }
+                            }
+                        }
+                }
+
+
+            }
+        }
+
+        private fun checkForAchievements() {
+            val user = FirebaseAuth.getInstance()
+            val userDB = FirebaseFirestore.getInstance().collection("users").document(user.uid!!)
+            userDB.get().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    //increase the coins sent by 1 and set the database to this value
+                    val coinsSent = Integer.parseInt(task.result!!.get("totalCoinsSent").toString()) + 1
+                    Log.d("sendingactivity", "coins sent $coinsSent")
+                    userDB.update("totalCoinsSent", coinsSent)
+
+                    val newAchievement = coinsSent == 1 || coinsSent == 100 || coinsSent == 500
+                    var achievement = ""
+                    when (coinsSent){
+                        1 -> achievement = "coinsGiven_F"
+                        100 -> achievement = "coinsGiven_KS"
+                        500 -> achievement = "coinsGiven_MT"
+                    }
+
+                    if (newAchievement){
+                        userDB.collection("achievements").document(achievement)
+                                .update("status", true)
+                    }
+
+                    Toast.makeText(itemView.context, "New achievement!", Toast.LENGTH_LONG).show()
+                }
+
             }
         }
     }
