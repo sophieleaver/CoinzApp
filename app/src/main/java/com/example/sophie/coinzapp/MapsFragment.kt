@@ -64,7 +64,7 @@ class MapsFragment : Fragment(){
     }
 
     interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
+        // TODO: Update argument type and currency
         fun onFragmentInteraction(uri: Uri)
     }
 

@@ -94,8 +94,8 @@ class SettingsFragment : Fragment(), View.OnClickListener {
                 achievements.add(Achievement_Details("Kind Soul", "Given away 100 coins", achievementDocs.get(4).get("status").toString().toBoolean()))
                 achievements.add(Achievement_Details("Mother Theresa", "Given away 500 coins", achievementDocs.get(5).get("status").toString().toBoolean()))
                 achievements.add(Achievement_Details("Cha Ching", "Spent 10,000 gold in the shop", achievementDocs.get(6).get("status").toString().toBoolean()))
-                achievements.add(Achievement_Details("Hey Big Spender", "Spent 30,000 gold in the shop", achievementDocs.get(7).get("status").toString().toBoolean()))
-                achievements.add(Achievement_Details("Splish Splash There Goes My Cash", "Spent 50,000 gold in the shop", achievementDocs.get(8).get("status").toString().toBoolean()))
+                achievements.add(Achievement_Details("Hey Big Spender", "Spent 40,000 gold in the shop", achievementDocs.get(7).get("status").toString().toBoolean()))
+                achievements.add(Achievement_Details("Splish Splash There Goes My Cash", "Spent 80,000 gold in the shop", achievementDocs.get(8).get("status").toString().toBoolean()))
 
             } else {
                 Log.d(tag, "Error getting documents: ", task.exception)

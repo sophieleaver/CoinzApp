@@ -7,23 +7,25 @@
     app:cardCornerRadius="4dp">
 
     <RelativeLayout
-        android:layout_width="345dp"
-        android:layout_height="45dp"
+        android:layout_width="390dp"
+        android:layout_height="58dp"
         android:layout_margin="4dp">
 
         <ImageView
             android:id="@+id/imageView"
-            android:layout_width="46dp"
+            android:layout_width="59dp"
             android:layout_height="match_parent"
             android:padding="2dp" />
 
         <TextView
             android:id="@+id/textView"
-            android:layout_width="68dp"
-            android:layout_height="39dp"
+            android:layout_width="69dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/imageView"
             android:layout_alignParentTop="true"
-            android:layout_marginStart="0dp"
-            android:layout_marginTop="6dp"
+            android:layout_marginStart="22dp"
+            android:layout_marginTop="15dp"
+            android:layout_marginBottom="16dp"
             android:layout_toEndOf="@+id/imageView"
             android:text="line_1"
             android:textColor="@android:color/black"
@@ -32,24 +34,31 @@
 
         <TextView
             android:id="@+id/textView2"
-            android:layout_width="122dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/textView"
-            android:layout_marginStart="71dp"
-            android:layout_marginTop="-35dp"
-            android:layout_toEndOf="@+id/imageView"
+            android:layout_width="72dp"
+            android:layout_height="24dp"
+            android:layout_alignStart="@+id/imageView"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="165dp"
+            android:layout_marginTop="17dp"
+            android:layout_marginEnd="153dp"
+            android:layout_marginBottom="17dp"
             android:text="line_2"
             android:textAlignment="viewStart"
             android:textSize="18sp" />
 
         <Button
             android:id="@+id/button_send_coin"
+            style="@style/Widget.AppCompat.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="44dp"
             android:layout_alignTop="@+id/textView2"
             android:layout_alignParentEnd="true"
-            android:layout_marginTop="-12dp"
-            android:layout_marginEnd="8dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginTop="-10dp"
+            android:layout_marginEnd="13dp"
+            android:layout_marginBottom="8dp"
             android:text="SEND"
             android:textSize="18sp" />
     </RelativeLayout>

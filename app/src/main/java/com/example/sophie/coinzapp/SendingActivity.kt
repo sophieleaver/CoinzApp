@@ -21,6 +21,7 @@ import kotlinx.android.synthetic.main.content_sending.*
 import kotlinx.android.synthetic.main.user_item.view.*
 import org.jetbrains.anko.find
     var coinCurrency : String = ""
+//    var coinCurrencyString : String = ""
     var coinValue : String = ""
     var coinID : String = ""
 
@@ -37,6 +38,7 @@ class SendingActivity : AppCompatActivity(), View.OnClickListener {
         setContentView(R.layout.activity_sending)
 
         coinCurrency = intent.extras.getString("currency")
+//        coinCurrencyString = intent.extras.getString("currencyString")
         coinValue = intent.extras.getString("value")
         coinID = intent.extras.getString("id")
         Log.d(tag, "sending coin of currency $coinCurrency and value $coinValue")
@@ -181,6 +183,7 @@ class CustomAdapter(val userList: ArrayList<User_Details>) : RecyclerView.Adapte
 
                                     val sentCoin = HashMap<String, Any>()
                                     sentCoin.put("currency", coinCurrency)
+//                                    sentCoin.put("currencyString", coinCurrencyString)
                                     sentCoin.put("value", coinValue)
 
                                     userDB.document(document.id).collection("unacceptedCoins").add(sentCoin)
@@ -220,9 +223,8 @@ class CustomAdapter(val userList: ArrayList<User_Details>) : RecyclerView.Adapte
                     if (newAchievement){
                         userDB.collection("achievements").document(achievement)
                                 .update("status", true)
+                        Toast.makeText(itemView.context, "New achievement!", Toast.LENGTH_LONG).show()
                     }
-
-                    Toast.makeText(itemView.context, "New achievement!", Toast.LENGTH_LONG).show()
                 }
 
             }

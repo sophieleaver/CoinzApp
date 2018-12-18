@@ -8,7 +8,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AnticipateInterpolator
 import android.widget.*
 import com.example.sophie.coinzapp.*
 import com.example.sophie.coinzapp.R
@@ -18,11 +17,10 @@ import kotlinx.android.synthetic.main.fragment_bank.*
 import kotlinx.android.synthetic.main.coin_item.view.*
 import kotlinx.android.synthetic.main.fragment_bank.view.*
 import kotlinx.android.synthetic.main.gift_item.view.*
-import org.jetbrains.anko.find
 import java.util.*
 import kotlin.collections.HashMap
 
-class BankFragment : Fragment(), View.OnClickListener {
+class BankFragment : Fragment(){
 
     private var goldInBank : Int = 0
     private var userDB = FirebaseFirestore.getInstance().collection("users").document(FirebaseAuth.getInstance().uid!!)
@@ -33,8 +31,6 @@ class BankFragment : Fragment(), View.OnClickListener {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         val view = inflater.inflate(R.layout.fragment_bank, container, false)
-        val button : Button = view.find(R.id.button_gold_refresh)
-        button.setOnClickListener(this)
 
         val coins = ArrayList<Coin_Details>()
         val recyclerWallet = view.recyclerView_wallet
@@ -51,7 +47,13 @@ class BankFragment : Fragment(), View.OnClickListener {
                 for (document in task.result!!) {
                     if(document.id != "nullCoin") {
                         Log.d(fragTag, "adding coin currency: ${document.get("currency").toString()} value : ${document.get("value")}")
-                        coins.add(Coin_Details(document.id,document.get("currency").toString(), document.get("value").toString(), R.drawable.bit_coin))
+
+                        val coinID = document.id
+                        val currency = document.get("currency").toString()
+                        val currencyString = normaliseCurrencyName(currency)
+                        val stringValue = document.get("value").toString() // the value of the coin as a string
+
+                        coins.add(Coin_Details(coinID, currency, currencyString, stringValue, R.drawable.bit_coin))
                     }
                 }
             } else {
@@ -72,19 +74,25 @@ class BankFragment : Fragment(), View.OnClickListener {
         recyclerGifts.adapter = obj_adapter_gifts
 
         val giftCollection = userDB.collection("unacceptedCoins")
-        Log.d(fragTag, "adding unaccepted coins from database to recycler view")
+
+        //adding unaccepted coins from database to recycler view
         giftCollection.get().addOnCompleteListener(this.activity!!) {task ->
             if (task.isSuccessful) {
                 for (document in task.result!!) {
 
-                        Log.d(fragTag, "adding coin currency: ${document.get("currency").toString()} value : ${document.get("value")}")
-                        gifts.add(Gift_Details(document.id,document.get("currency").toString(), document.get("value").toString()))
+                    Log.d(fragTag, "adding coin currency: ${document.get("currency").toString()} value : ${document.get("value")}")
 
+                    val coinID = document.id
+                    val currency = document.get("currency").toString()
+//                    val currencyString = normaliseCurrencyName(currency)
+                    val stringValue = document.get("value").toString()
 
+                    gifts.add(Gift_Details(coinID,currency,stringValue))
                 }
             } else {
                 Log.d(tag, "Error getting documents: ", task.exception)
             }
+            //TODO what?
             val obj_adapter_gifts = CustomGiftAdapter(gifts)
             view.recyclerView_unacceptedCoins.layoutManager = LinearLayoutManager(context, LinearLayout.VERTICAL, false)
             view.recyclerView_unacceptedCoins.adapter = obj_adapter_gifts
@@ -100,23 +108,24 @@ class BankFragment : Fragment(), View.OnClickListener {
             if (e != null) {
                 Log.d(fragTag, "Error: ${e.message}")
             }
+//TODO uncomment code in paragraph below
 
-            for (doc in queryDocumentSnapshots!!.documentChanges) {
-                if (doc.type == DocumentChange.Type.ADDED){
-                    val currency = doc.document.get("currency")
-                    Log.d(fragTag, " coin added : currency is $currency")
-                    coins.add(Coin_Details(doc.document.id,doc.document.get("currency").toString(), doc.document.get("value").toString(), R.drawable.icon0_ffff00))
-
-
-                }
-//                if (doc.type == DocumentChange.Type.REMOVED){
-//                    val currency = doc.document.get("currency")
-//                    Log.d(fragTag, " coin removed : currency is $currency")
-//                    coins.remove(Coin_Details(doc.document.get("currency").toString(), doc.document.get("value").toString(), R.drawable.icon0_ffff00))
+//            for (doc in queryDocumentSnapshots!!.documentChanges) {
+//                if (doc.type == DocumentChange.Type.ADDED){
+//                    val currency = normaliseCurrencyName(doc.document.get("currency").toString())
+//                    Log.d(fragTag, " coin added : currency is $currency")
+//                    coins.add(Coin_Details(doc.document.id,currency, doc.document.get("value").toString(), R.drawable.icon0_ffff00))
 //
 //
 //                }
-            }
+////                if (doc.type == DocumentChange.Type.REMOVED){
+////                    val currency = doc.document.get("currency")
+////                    Log.d(fragTag, " coin removed : currency is $currency")
+////                    coins.remove(Coin_Details(doc.document.get("currency").toString(), doc.document.get("value").toString(), R.drawable.icon0_ffff00))
+////
+////
+////                }
+//            }
 
         }
 
@@ -137,15 +146,6 @@ class BankFragment : Fragment(), View.OnClickListener {
 
     }
 
-    override fun onClick(v: View?) {
-
-        when (v?.id) {
-            R.id.button_gold_refresh -> {
-                gold_in_bank_display.text = "$goldInBank"
-            }
-        }
-    }
-
     companion object {
         fun newInstance(): BankFragment = BankFragment()
     }
@@ -153,7 +153,9 @@ class BankFragment : Fragment(), View.OnClickListener {
 
 //---------------------------------------------------------------
 
-data class Coin_Details(val id: String, val name:String, val strVal:String, val image:Int)
+data class Coin_Details(val id: String, val currency:String, val currencyString: String, val strVal:String, val image:Int)
+//id = coin id
+//currency = raw currency token eg. PENY
 
 class CustomAdapter(val coinList: ArrayList<Coin_Details>) : RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
 
@@ -174,17 +176,21 @@ class CustomAdapter(val coinList: ArrayList<Coin_Details>) : RecyclerView.Adapte
         return coinList.size
     }
 
-    //the class is hodling the list view
+    //the class is holding the list view
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         fun bindItems(coin: Coin_Details) {
-            itemView.textView.text=coin.name
+            //display the coins currency, value, and image in recycler view
+            itemView.textView.text=coin.currencyString
             itemView.textView2.text=coin.strVal
             itemView.imageView.setImageResource(coin.image)
+
+            //if 'send' button clicked then pass coin details to SendingActivity
             itemView.button_send_coin.setOnClickListener{
                 val intent = Intent(itemView.context, SendingActivity::class.java)
                 intent.putExtra("id", coin.id)
-                intent.putExtra("currency", coin.name)
+                intent.putExtra("currency", coin.currency)
+//                intent.putExtra("currencyString", coin.currencyString)
                 intent.putExtra("value", coin.strVal)
                 itemView.context.startActivity(intent)
 
@@ -194,8 +200,23 @@ class CustomAdapter(val coinList: ArrayList<Coin_Details>) : RecyclerView.Adapte
 
     }
 }
+
+fun normaliseCurrencyName(currency: String) : String{
+    var result = ""
+    when (currency){
+        "SHIL" -> result = "Shilling"
+        "DOLR" -> result = "Dollar"
+        "QUID" -> result = "Quid"
+        "PENY" -> result = "Penny"
+    }
+    return result
+}
 //-------------------
-data class Gift_Details(val id: String, val name: String, val strVal:String)
+data class Gift_Details(val id: String, val currency: String, val strVal:String)
+//id = coin unique id for storing in database
+//currency = the raw currency symbol for the coin eg. PENY
+//currencyString = the full currency for the coin eg. Penny
+//strVal = the value of the coin as a string
 
 class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Adapter<CustomGiftAdapter.ViewHolder>() {
 
@@ -216,7 +237,7 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
         return giftList.size
     }
 
-    //the class is hodling the list view
+    //the class is holding the list view
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val user = FirebaseAuth.getInstance()
         val userDB = FirebaseFirestore.getInstance().collection("users").document(user.uid!!)
@@ -227,12 +248,13 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
 
                 userDB.get().addOnCompleteListener{ task ->
                     if (task.isSuccessful) {
+                        val currencyString = normaliseCurrencyName(gift.currency)
 
                         val user = task.result!!
-
                         val builder = AlertDialog.Builder(itemView.context)
+
                         builder.setTitle("A user has sent you a coin!")
-                        builder.setMessage("Another user has sent you a ${gift.name} - How generous <3\nBut how much? Accept the coin to find out! \nClick Accept to add the coin to your bank or click Discard to throw the coin away! \n\nWARNING: If you discard the coin, it is gone forever.")
+                        builder.setMessage("Another user has sent you a $currencyString - How generous <3\nBut how much? Accept the coin to find out! \nClick Accept to add the coin to your bank or click Discard to throw the coin away! \n\nWARNING: If you discard the coin, it is gone forever.")
 
                         builder.setPositiveButton("ACCEPT") { dialog, which ->
                             val coinsCollected = user.get("dailyCoinsCollected").toString().toInt()
@@ -263,7 +285,7 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
 
         private fun addGoldToBank(user : DocumentSnapshot, gift: Gift_Details) {
             val currentGoldInBank = user.get("goldInBank").toString().toFloat()
-            val goldValueOfCoin = getCoinExchangeRate(gift.name) * gift.strVal.toFloat()
+            val goldValueOfCoin = getCoinExchangeRate(gift.currency) * gift.strVal.toFloat()
             userDB.update("goldInBank", (currentGoldInBank + goldValueOfCoin))
 
             Toast.makeText(itemView.context, "Adding $goldValueOfCoin to bank account", Toast.LENGTH_LONG).show()
@@ -273,7 +295,7 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
             Toast.makeText(itemView.context, "Cannot add any more coins to the bank today!", Toast.LENGTH_LONG).show()
 
             val coin = HashMap<String, Any>()
-            coin.put("currency", gift.name)
+            coin.put("currency", gift.currency)
             coin.put("value", gift.strVal)
 
             userDB.collection("wallet").document(gift.id).set(coin)
@@ -281,7 +303,7 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
 
         private fun removeCoinFromDatabase(gift : Gift_Details) {
             userDB.collection("unacceptedCoins").document(gift.id).delete().addOnSuccessListener {
-                Log.d("BankFragment", "coin has been successfully removed ${gift.id}, currency: ${gift.name}, value: ${gift.strVal}")
+                Log.d("BankFragment", "coin has been successfully removed ${gift.id}, currency: ${gift.currency}, value: ${gift.strVal}")
             }
         }
 

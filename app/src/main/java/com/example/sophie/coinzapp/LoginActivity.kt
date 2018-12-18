@@ -4,23 +4,26 @@ import android.annotation.TargetApi
 import android.support.v7.app.AppCompatActivity
 import android.os.Build
 import android.os.Bundle
-import android.text.TextUtils
 import android.content.Intent
+import android.support.v7.app.AlertDialog
+import android.text.TextUtils
 import android.util.Log
+import android.view.View
+import android.widget.EditText
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.android.synthetic.main.activity_login.*
-import kotlinx.android.synthetic.main.activity_login.fieldEmail
-import kotlinx.android.synthetic.main.activity_login.fieldPassword
+import kotlinx.android.synthetic.main.login_dialog.*
 
 
 /**
  * A login screen that offers login via email/password.
  */
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : AppCompatActivity(), View.OnClickListener {
+
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
@@ -28,16 +31,76 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var auth:  FirebaseAuth
     private val tag = "LoginActivity"
     private var username = ""
+    private var emailForm :EditText? = null
+    private var passwordForm :EditText?= null
+    private var usernameForm :EditText?=null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
+        val view = setContentView(R.layout.activity_login)
         // Set up the login form.
 
-        email_sign_in_button.setOnClickListener { signIn(fieldEmail.text.toString(), fieldPassword.text.toString())}
-        email_sign_up_button.setOnClickListener { createAccount(fieldEmail.text.toString(), fieldPassword.text.toString())
+        email_sign_in_button.setOnClickListener { signIn(email_form.text.toString(), password_form.text.toString())}
+        email_sign_up_button.setOnClickListener { createAccount(email_form.text.toString(), password_form.text.toString())
                                                     username = fieldUsername.text.toString()}
+
+        log_in_button_dialog.setOnClickListener(this)
+        register_button_dialog.setOnClickListener(this)
         auth = FirebaseAuth.getInstance()
+    }
+
+    override fun onClick(v: View?) {
+        when(v?.id){
+            R.id.log_in_button_dialog -> {
+                openLogInDiaglog()
+            }
+            R.id.register_button_dialog -> {
+                openRegisterDialog()
+            }
+        }
+    }
+
+    fun openLogInDiaglog(){
+        val builder = AlertDialog.Builder(this)
+        val builderView = layoutInflater.inflate(R.layout.login_dialog, null)
+        builder.setView(builderView)
+        emailForm = builderView.findViewById<EditText>(R.id.email_form)
+        passwordForm = builderView.findViewById<EditText>(R.id.password_form)
+
+        builder.setNeutralButton("cancel") {
+            dialog, id -> dialog.cancel() }
+
+        builder.setPositiveButton("Log In"){ dialogInterface, i -> }
+
+        builder.create()
+        val customDialog = builder.show()
+
+        customDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+            signIn(emailForm!!.text.toString(), passwordForm!!.text.toString())
+        }
+
+    }
+
+    fun openRegisterDialog(){
+        val builder = AlertDialog.Builder(this)
+        val builderView = layoutInflater.inflate(R.layout.register_dialog, null)
+        builder.setView(builderView)
+        emailForm = builderView.findViewById<EditText>(R.id.email_form)
+        passwordForm = builderView.findViewById<EditText>(R.id.password_form)
+        usernameForm = builderView.findViewById<EditText>(R.id.username_form)
+
+        builder.setNeutralButton("cancel") {
+            dialog, id -> dialog.cancel() }
+
+        builder.setPositiveButton("Register"){ dialogInterface, i -> }
+
+        builder.create()
+        val customDialog = builder.show()
+
+        customDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+            createAccount(emailForm!!.text.toString(), passwordForm!!.text.toString())
+            username = usernameForm!!.text.toString()
+        }
     }
 
     // [START on_start_check_user]
@@ -56,8 +119,6 @@ class LoginActivity : AppCompatActivity() {
         if (!validateForm()) { //TODO what does this do?
             return
         }
-
-
 
         // [START create_user_with_email]
         auth.createUserWithEmailAndPassword(email, password)
@@ -148,20 +209,20 @@ class LoginActivity : AppCompatActivity() {
     private fun validateForm(): Boolean {
         var valid = true
 
-        val email = fieldEmail.text.toString()
+        val email = emailForm!!.text.toString()
         if (TextUtils.isEmpty(email)) {
-            fieldEmail.error = "Required."
+            emailForm!!.error = "Required."
             valid = false
         } else {
-            fieldEmail.error = null
+            emailForm!!.error = null
         }
 
-        val password = fieldPassword.text.toString()
+        val password = passwordForm!!.text.toString()
         if (TextUtils.isEmpty(password)) {
-            fieldPassword.error = "Required."
+            passwordForm!!.error = "Required."
             valid = false
         } else {
-            fieldPassword.error = null
+            passwordForm!!.error = null
         }
 
         return valid
@@ -201,17 +262,18 @@ class LoginActivity : AppCompatActivity() {
         userDB.collection("unacceptedCoins").document("nullCoin")
                 .set(nullCoin)
                 .addOnFailureListener{e -> Log.w(tag, "Error adding nullCoin to unacceptedCoins", e)}
-        setPurchased(userDB)
+        setPurchasedCoins(userDB)
+        setPurchasedMaps(userDB)
         setAchievements(userDB)
     }
-    private fun setPurchased(userDB : DocumentReference){
+    private fun setPurchasedCoins(userDB : DocumentReference){
         val coinThemePurchaseFalse = HashMap<String, Any>()
         coinThemePurchaseFalse.put("purchased", false)
 
         val coinThemePurchaseTrue = HashMap<String, Any>()
-        coinThemePurchaseFalse.put("purchased", true)
+        coinThemePurchaseTrue.put("purchased", true)
 
-        val purchases = userDB.collection("purchases")
+        val purchases = userDB.collection("purchasedCoins")
 
         // set original coin theme as purchased as it is free
         purchases.document("original").set(coinThemePurchaseTrue)
@@ -219,6 +281,23 @@ class LoginActivity : AppCompatActivity() {
         purchases.document("dark").set(coinThemePurchaseFalse)
         purchases.document("pale").set(coinThemePurchaseFalse)
         purchases.document("party").set(coinThemePurchaseFalse)
+
+    }
+
+    private fun setPurchasedMaps(userDB : DocumentReference){
+        val mapThemePurchaseFalse = HashMap<String, Any>()
+        mapThemePurchaseFalse.put("purchased", false)
+
+        val mapThemePurchaseTrue = HashMap<String, Any>()
+        mapThemePurchaseTrue.put("purchased", true)
+
+        val purchases = userDB.collection("purchasedMaps")
+
+        // set original coin theme as purchased as it is free
+        purchases.document("original").set(mapThemePurchaseTrue)
+        // set other coin themes as unpurchased
+        purchases.document("dark").set(mapThemePurchaseFalse)
+        purchases.document("pale").set(mapThemePurchaseFalse)
 
     }
 

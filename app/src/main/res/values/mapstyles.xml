@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dark_map_url">mapbox://styles/sophieleaver/cjpmwo4uf0ca72rpiqudgtzvs</string>
+    <string name="original_map_url">mapbox://styles/sophieleaver/cjpmx4otj0pgc2spe6vvce8zr</string>
+    <string name="pale_map_url">mapbox://styles/sophieleaver/cjpmxc4hu025o2rqagw58kja5</string>
+</resources>

@@ -27,5 +27,6 @@
     <string name="text_set_as_coin_style">Set Style</string>
     <string name="title_activity_sending">SendingActivity</string>
 
+    <string name="url_dark_style"></string>
 
 </resources>

@@ -123,7 +123,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_shop -> {
-                val shopFragment = ShopFragment.newInstance()
+                val shopFragment = ShopFragment.newInstance(map!!)
                 openFragment(shopFragment)
                 return@OnNavigationItemSelectedListener true
             }
@@ -192,10 +192,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             setDailyExchangeRates(geoJsonDataString)
             //once exchange rates have been set, set them in map fragment
             Log.d(tag, "opening mapfragment now")
+            setMapStyle(currentMapStyle)
             openFragment(MapsFragment.newInstance(shilRate,dolrRate,quidRate,penyRate))
-
         }
-
     }
 
     private fun removeCoinsAndDownloadNewMap(featureCollection: FeatureCollection){
@@ -302,7 +301,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
     private fun findIcon(currency : String, coinSymbol : String) : Icon {
         var icons = resources.obtainTypedArray(R.array.original_quid_icons)
-
+        Log.d(tag, "adding coins of currency $currency to the map")
         when (currency) {
             "DOLR" -> when (iconStyle) {
                 "original" -> icons = resources.obtainTypedArray(R.array.original_dollar_icons)
@@ -483,6 +482,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         addUncollectedCoinsToMap()
     }
 
+    fun setMapStyle(style : String){
+            //use style string to get map identifier
+        val url = getMapStyleURL(style)
+            //use map identifier to get map style URL
+        val urlID = resources.getString(url)
+        map!!.setStyleUrl(urlID)
+        Log.d(tag, "map style is now $style")
+    }
+
+    fun getMapStyleURL(style : String): Int {
+        var result = 0
+        when (style) {
+            "dark" -> result =  R.string.dark_map_url
+            "original" -> result = R.string.original_map_url
+            "pale" -> result = R.string.pale_map_url
+        }
+        return result
+    }
+
 //------ all Location and permissions methods ------
 
     private fun enableLocation() {
@@ -584,6 +602,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         //access the last chosen coin icon style
         iconStyle = settings.getString("lastIconStyle", "original")
         Log.d(tag, "[onStart] Recalled lastIconStyle is '$iconStyle'")
+        currentMapStyle = settings.getString("lastMapStyle", "original")
         mapView?.onStart()
 
 
@@ -607,6 +626,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
         val editor = settings.edit() // editor = makes pref changes
         editor.putString("lastIconStyle", iconStyle)
+        editor.putString("lastMapStyle", currentMapStyle)
         editor.apply() // apply edits
 
         mapView!!.onStop()
