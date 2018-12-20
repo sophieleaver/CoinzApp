@@ -28,17 +28,18 @@ import org.junit.*
 import org.junit.runner.RunWith
 
 /**
- * Tests that on purchase of a coin set (in this case, the pale coin set) that the user's
- * gold total in bank decreases by 10,000.
+ * Tests that on attempted purchase of a map set (in this case, the dark map style) that the user's
+ * gold total in bank is not decreased if there is insufficient gold in bank.
  */
 
 @LargeTest
 @RunWith(AndroidJUnit4::class)
-class PurchaseCoinStyleTest {
+class UnsuccessfulPurchaseMapStyleTest {
 
     @Rule
     @JvmField
     var mActivityTestRule = ActivityTestRule(LoginActivity::class.java)
+
 
     @Rule
     @JvmField
@@ -48,17 +49,16 @@ class PurchaseCoinStyleTest {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    private val tag = "PurchaseCoinStyleTest"
+    private val tag = "UnsuccessfulPurchaseMapStyleTest"
 
     @Before
     fun loginTestUser(){
-        //set test users account to contain 10,000 gold
-        Log.d(tag, "updating test user gold balance to 10,000")
-        db.collection("users").document("FI03lI0G9qbTaBIg385X4BoIDw23").update("goldInBank", 10000).addOnCompleteListener {
+        Log.d(tag, "updating test user gold balance to 24,000")
+        db.collection("users").document("FI03lI0G9qbTaBIg385X4BoIDw23").update("goldInBank", 24000).addOnCompleteListener {
             Log.d(tag, "goldInBank value successfully updated")
         }
-        //set test users account to have not already purchased the pale coin set
-        Log.d(tag, "set pale coin style to unpurchased started")
+
+        Log.d(tag, "set dark map style to unpurchased at start")
         val db = FirebaseFirestore.getInstance()
         db.collection("users").document("FI03lI0G9qbTaBIg385X4BoIDw23").collection("purchasedCoins")
                 .document("pale").update("purchased", false).addOnSuccessListener {
@@ -104,7 +104,7 @@ class PurchaseCoinStyleTest {
             // Added a sleep statement to match the app's execution delay.
             // The recommended way to handle such scenarios is to use Espresso idling resources:
             // https://google.github.io/android-testing-support-library/docs/espresso/idling-resource/index.html
-            Thread.sleep(7000)
+            Thread.sleep(4000)
 
             val bottomNavigationItemView = onView(
                     allOf(withId(R.id.navigation_bank)))
@@ -112,9 +112,9 @@ class PurchaseCoinStyleTest {
 
             Thread.sleep(7000)
             val textView = onView(
-                    allOf(withId(R.id.gold_in_bank_display),// withText("975000"),
+                    allOf(withId(R.id.gold_in_bank_display),
                             isDisplayed()))
-            textView.check(matches(withText("10000")))
+            textView.check(matches(withText("24000")))
 
             val bottomNavigationItemView2 = onView(
                     allOf(withId(R.id.navigation_shop),
@@ -122,7 +122,7 @@ class PurchaseCoinStyleTest {
             bottomNavigationItemView2.perform(click())
 
             val appCompatButton3 = onView(
-                    allOf(withId(R.id.button_view_paleCoins), withText("Pale"),
+                    allOf(withId(R.id.button_dark_map),
                             isDisplayed()))
             appCompatButton3.perform(click())
 
@@ -137,19 +137,7 @@ class PurchaseCoinStyleTest {
             Thread.sleep(7000)
             val textView3 = onView(
                     allOf(withId(R.id.gold_in_bank_display)))
-            textView3.check(matches(withText("0")))
-
+            textView3.check(matches(withText("24000")))
     }
-
-//    @After
-//    fun setPaleCoinsAsUnpurchased(){
-//        Log.d("tag", "set pale coin style to unpurchased started")
-//        val db = FirebaseFirestore.getInstance()
-//        db.collection("users").document("FI03lI0G9qbTaBIg385X4BoIDw23").collection("purchasedCoins")
-//                .document("pale").update("purchased", false).addOnSuccessListener {
-//                    Log.d("tag", "pale coins set as unpurchased")
-//                }
-//        auth.signOut()
-//    }
 
 }

@@ -294,7 +294,7 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
 
         private fun addGoldToBank(user : DocumentSnapshot, gift: Gift_Details) {
             val currentGoldInBank = user.get("goldInBank").toString().toFloat()
-            val goldValueOfCoin = getCoinExchangeRate(gift.currency) * gift.strVal.toFloat()
+            val goldValueOfCoin = (gift.context as MainActivity).getCoinExchangeRate(gift.currency) * gift.strVal.toFloat()
             userDB.update("goldInBank", (currentGoldInBank + goldValueOfCoin))
 
             Toast.makeText(itemView.context, "Adding $goldValueOfCoin to bank account", Toast.LENGTH_LONG).show()

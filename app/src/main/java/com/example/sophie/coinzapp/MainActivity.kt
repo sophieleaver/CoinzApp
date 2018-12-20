@@ -54,17 +54,6 @@ var dolrRate: Double = 0.0
 var quidRate: Double = 0.0
 var penyRate: Double = 0.0
 
-fun getCoinExchangeRate(currency: String): Double {
-    var rate = 0.0
-    when (currency) {
-        "DOLR" -> rate = dolrRate
-        "PENY" -> rate = penyRate
-        "QUID" -> rate = quidRate
-        "SHIL" -> rate = shilRate
-    }
-    return rate
-}
-
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener {
     //mapbox and location variables
     private var mapView: MapView? = null
@@ -583,6 +572,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
         return result
     }
+
+    fun getCoinExchangeRate(currency: String): Double {
+        var rate = 0.0
+        when (currency) {
+            "DOLR" -> rate = dolrRate
+            "PENY" -> rate = penyRate
+            "QUID" -> rate = quidRate
+            "SHIL" -> rate = shilRate
+        }
+        return rate
+    }
+
 
 //----------------------- all Location and permissions methods ---------------------------
 
