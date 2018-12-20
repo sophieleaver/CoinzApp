@@ -94,7 +94,7 @@ class ShopFragment : Fragment(), View.OnClickListener {
         //create an alert dialog to ask user if they want to purchase/set the coin set
         val builder = AlertDialog.Builder(this.context)
         builder.setTitle(style.capitalize() + " Coin Set")
-        builder.setMessage("Press select to purchase coins or cancel to return.")
+
 
         //set neutral button to cancel action
         builder.setNeutralButton("CANCEL"){dialog, which ->
@@ -107,12 +107,14 @@ class ShopFragment : Fragment(), View.OnClickListener {
         /*if the user has already purchased the coin set, give them the option
           to set as the coin style*/
         if (userAlreadyPurchased) {
+            builder.setMessage("Press Set Coin Style to select coins or cancel to return.")
             builder.setPositiveButton("SET COIN STYLE"){dialog, which ->
                 setCoinStyle(style)
             }
         }
         // else, give the user the option to purchase the coin set for coinCost amount of gold
         else{
+            builder.setMessage("Press Purchase to buy coin style or cancel to return.")
             builder.setPositiveButton("PURCHASE ($coinCost Gold)"){ dialog, which ->
                 makePurchase(style, "coin")
             }
@@ -128,8 +130,7 @@ class ShopFragment : Fragment(), View.OnClickListener {
         //similar functionality as showViewCoinSetDialog
         //begin alert dialog
         val builder = AlertDialog.Builder(this.context)
-        builder.setTitle(style.capitalize() + " Map Set")
-        builder.setMessage("Press select to purchase map or cancel to return.")
+        builder.setTitle(style.capitalize() + " Map Style")
 
         //set neutral button to allow cancellation
         builder.setNeutralButton("CANCEL") { dialog, which ->
@@ -140,12 +141,14 @@ class ShopFragment : Fragment(), View.OnClickListener {
         val userAlreadyPurchased = userPurchasedMaps.result!!.documents.get(purchaseIndex).get("purchased").toString().toBoolean()
         //if so, display option to set selected map as the current map style
         if (userAlreadyPurchased) {
+            builder.setMessage("Press Set Map Style to select map or cancel to return.")
             builder.setPositiveButton("SET MAP STYLE") { dialog, which ->
                 setMapStyle(style)
             }
         }
         // else give user option to purchase selected map for mapCost gold
         else {
+            builder.setMessage("Press Purchase to buy map style or cancel to return.")
             builder.setPositiveButton("PURCHASE ($mapCost Gold)") { dialog, which ->
                // user purchases the style if they do not already own it
                  makePurchase(style, "map")
@@ -233,14 +236,8 @@ class ShopFragment : Fragment(), View.OnClickListener {
         if (currentMapStyle == style) {
             Toast.makeText(context, "Map is already set to $style", Toast.LENGTH_SHORT).show()
         } else {
-//            //use style string to get map identifier
-//            val url = getMapStyleURL(style)
-//            //use map identifier to get map style URL
-//            val urlID = resources.getString(url)
-
             Toast.makeText(context, "Map now being set to $style",Toast.LENGTH_SHORT).show()
 //            Log.d(tag, "setting map style to $style")
-
             //set as map style
             (activity as MainActivity).setMapStyle(style)
             currentMapStyle = style

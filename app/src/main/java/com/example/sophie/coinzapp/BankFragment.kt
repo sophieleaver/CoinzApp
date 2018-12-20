@@ -1,4 +1,5 @@
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -24,13 +25,38 @@ class BankFragment : Fragment(){
 
     private var goldInBank : Int = 0
     private var userDB = FirebaseFirestore.getInstance().collection("users").document(FirebaseAuth.getInstance().uid!!)
-    private var db = FirebaseFirestore.getInstance()
-
     private var fragTag = "BankFragment"
+
+    override fun onStart(){
+        super.onStart()
+        //set the 'Gold in Bank' view to current goldInBank on Cloud Firestore
+        userDB.get().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val document = task.result!!
+
+                goldInBank = (document.get("goldInBank").toString().toFloat().toInt())
+                gold_in_bank_display.text = "$goldInBank" //TODO there are issues with nulls here to be fixed.
+
+                Log.d(fragTag, "gold in bank = $goldInBank")
+            }
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         val view = inflater.inflate(R.layout.fragment_bank, container, false)
+
+        populateWalletRecyclerView(view)
+        populateGiftRecyclerView(view)
+
+        return view
+    }
+
+    companion object {
+        fun newInstance(): BankFragment = BankFragment()
+    }
+
+    private fun populateWalletRecyclerView(view : View){
 
         val coins = ArrayList<Coin_Details>()
         val recyclerWallet = view.recyclerView_wallet
@@ -40,31 +66,32 @@ class BankFragment : Fragment(){
         recyclerWallet.layoutManager = LinearLayoutManager(context, LinearLayout.VERTICAL, false)
         recyclerWallet.adapter = obj_adapter_wallet
 
+
         val walletCollection = userDB.collection("wallet")
         Log.d(fragTag, "adding collected coins from wallet to recycler view")
         walletCollection.get().addOnCompleteListener(this.activity!!) {task ->
-            if (task.isSuccessful) {
-                for (document in task.result!!) {
-                    if(document.id != "nullCoin") {
-                        Log.d(fragTag, "adding coin currency: ${document.get("currency").toString()} value : ${document.get("value")}")
-
-                        val coinID = document.id
-                        val currency = document.get("currency").toString()
-                        val currencyString = normaliseCurrencyName(currency)
-                        val stringValue = document.get("value").toString() // the value of the coin as a string
-
-                        coins.add(Coin_Details(coinID, currency, currencyString, stringValue, R.drawable.bit_coin))
-                    }
-                }
-            } else {
-                Log.d(tag, "Error getting documents: ", task.exception)
-            }
-            val obj_adapter_wallet = CustomAdapter(coins)
             view.recyclerView_wallet.layoutManager = LinearLayoutManager(context, LinearLayout.VERTICAL, false)
             view.recyclerView_wallet.adapter = obj_adapter_wallet
-
         }
 
+        //listens for when there is a change in documents (coins added)
+        walletCollection.addSnapshotListener { queryDocumentSnapshots, e ->
+            if (e != null) {
+                Log.d(fragTag, "Error: ${e.message}")
+            }
+            for (doc in queryDocumentSnapshots!!.documentChanges) {
+                if (doc.type == DocumentChange.Type.ADDED && doc.document.id != "nullCoin") {
+                    val currency = doc.document.get("currency").toString()
+                    val currencyString = (activity as MainActivity).normaliseCurrencyName(doc.document.get("currency").toString())
+
+                    coins.add(Coin_Details(doc.document.id, currency, currencyString, doc.document.get("value").toString(), R.drawable.bit_coin))
+                    view.recyclerView_wallet.adapter.notifyDataSetChanged()
+                }
+            }
+        }
+    }
+
+    private fun populateGiftRecyclerView(view: View){
         val gifts = ArrayList<Gift_Details>()
         val recyclerGifts = view.recyclerView_unacceptedCoins
         val obj_adapter_gifts = CustomGiftAdapter(gifts)
@@ -77,82 +104,56 @@ class BankFragment : Fragment(){
 
         //adding unaccepted coins from database to recycler view
         giftCollection.get().addOnCompleteListener(this.activity!!) {task ->
-            if (task.isSuccessful) {
-                for (document in task.result!!) {
-
-                    Log.d(fragTag, "adding coin currency: ${document.get("currency").toString()} value : ${document.get("value")}")
-
-                    val coinID = document.id
-                    val currency = document.get("currency").toString()
-//                    val currencyString = normaliseCurrencyName(currency)
-                    val stringValue = document.get("value").toString()
-
-                    gifts.add(Gift_Details(coinID,currency,stringValue))
-                }
-            } else {
-                Log.d(tag, "Error getting documents: ", task.exception)
-            }
-            //TODO what?
-            val obj_adapter_gifts = CustomGiftAdapter(gifts)
             view.recyclerView_unacceptedCoins.layoutManager = LinearLayoutManager(context, LinearLayout.VERTICAL, false)
             view.recyclerView_unacceptedCoins.adapter = obj_adapter_gifts
-
         }
 
-
-
-
-
-        userDB.collection("wallet").addSnapshotListener { queryDocumentSnapshots, e ->
-
+        giftCollection.addSnapshotListener { queryDocumentSnapshots, e ->
             if (e != null) {
                 Log.d(fragTag, "Error: ${e.message}")
             }
-//TODO uncomment code in paragraph below
+            for (doc in queryDocumentSnapshots!!.documentChanges) {
+                val coinID = doc.document.id
+                val currency = doc.document.get("currency").toString()
+                val value = doc.document.get("value").toString()
 
-//            for (doc in queryDocumentSnapshots!!.documentChanges) {
-//                if (doc.type == DocumentChange.Type.ADDED){
-//                    val currency = normaliseCurrencyName(doc.document.get("currency").toString())
-//                    Log.d(fragTag, " coin added : currency is $currency")
-//                    coins.add(Coin_Details(doc.document.id,currency, doc.document.get("value").toString(), R.drawable.icon0_ffff00))
-//
-//
-//                }
-////                if (doc.type == DocumentChange.Type.REMOVED){
-////                    val currency = doc.document.get("currency")
-////                    Log.d(fragTag, " coin removed : currency is $currency")
-////                    coins.remove(Coin_Details(doc.document.get("currency").toString(), doc.document.get("value").toString(), R.drawable.icon0_ffff00))
-////
-////
-////                }
-//            }
+                if (doc.type == DocumentChange.Type.ADDED && doc.document.id != "nullCoin") {
+                    gifts.add(Gift_Details(coinID, currency, value, context!!))
+                    view.recyclerView_unacceptedCoins.adapter.notifyDataSetChanged()
+                }
 
-        }
+                if (doc.type == DocumentChange.Type.REMOVED){
+                    Log.d(fragTag, " coin removed : currency is $currency")
 
+                    gifts.remove(Gift_Details(coinID, currency, value, context!!))
+                    view.recyclerView_unacceptedCoins.adapter.notifyDataSetChanged()
 
-        return view
-    }
+                    //if a coin has been removed then refresh the current gold in bank displayed on the screen
+                    userDB.get().addOnCompleteListener { task ->
+                        if (task.isSuccessful){
+                            val document = task.result
+                            val goldUpdate = document!!.get("goldInBank").toString().toFloat().toInt()
+                            val v = view.findViewById<TextView>(R.id.gold_in_bank_display)
+                            v.text = "$goldUpdate"
+                        }
 
-    override fun onStart(){
-        super.onStart()
-        userDB.get().addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val document = task.result!!
-                goldInBank = (document.get("goldInBank").toString().toFloat().toInt())
-                gold_in_bank_display.text = "$goldInBank"
-                Log.d(fragTag, "gold in bank = $goldInBank")
+                    }
+                }
             }
         }
-
-    }
-
-    companion object {
-        fun newInstance(): BankFragment = BankFragment()
     }
 }
 
 //---------------------------------------------------------------
-
+/**
+ * Class specifying the details required for a 'coin' object:
+ * id = coin unique id for storing in database
+ * currency = the raw currency symbol for the coin eg. PENY
+ * currencyString = the full string of the currency of the coin eg. Penny
+ * strVal = the value of the coin as a string
+ * image = the ID for the image that the coin should display in the RecyclerView
+ *
+ */
 data class Coin_Details(val id: String, val currency:String, val currencyString: String, val strVal:String, val image:Int)
 //id = coin id
 //currency = raw currency token eg. PENY
@@ -185,62 +186,63 @@ class CustomAdapter(val coinList: ArrayList<Coin_Details>) : RecyclerView.Adapte
             itemView.textView2.text=coin.strVal
             itemView.imageView.setImageResource(coin.image)
 
-            //if 'send' button clicked then pass coin details to SendingActivity
+            //if 'send' button clicked then pass coin details to SendingActivity so coin can be sent to another user
             itemView.button_send_coin.setOnClickListener{
                 val intent = Intent(itemView.context, SendingActivity::class.java)
+
                 intent.putExtra("id", coin.id)
                 intent.putExtra("currency", coin.currency)
-//                intent.putExtra("currencyString", coin.currencyString)
                 intent.putExtra("value", coin.strVal)
-                itemView.context.startActivity(intent)
 
-
+                itemView.context.startActivity(intent) // start SendingActivity
             }
         }
-
     }
 }
 
-fun normaliseCurrencyName(currency: String) : String{
-    var result = ""
-    when (currency){
-        "SHIL" -> result = "Shilling"
-        "DOLR" -> result = "Dollar"
-        "QUID" -> result = "Quid"
-        "PENY" -> result = "Penny"
-    }
-    return result
-}
-//-------------------
-data class Gift_Details(val id: String, val currency: String, val strVal:String)
-//id = coin unique id for storing in database
-//currency = the raw currency symbol for the coin eg. PENY
-//currencyString = the full currency for the coin eg. Penny
-//strVal = the value of the coin as a string
+
+
+//----------------------------------------------------------------------------------------------
+/**
+ * Specifies the details required for a 'gift' object.
+ * id = coin unique id for storing in database
+ * currency = the raw currency symbol for the coin eg. PENY
+ * strVal = the value of the coin as a string
+ *
+ * Implements the CustomGiftAdapter required to populate the GiftRecyclerView.
+ */
+data class Gift_Details(val id: String, val currency: String, val strVal:String, val context: Context)
+
 
 class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Adapter<CustomGiftAdapter.ViewHolder>() {
 
-    //this method is returning the view for each item in the list
+    /**
+     * Function is returning the view for each item in the list.
+     */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CustomGiftAdapter.ViewHolder {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.gift_item, parent, false)
         return ViewHolder(v)
     }
 
-    //this method is binding the data on the list
+    /**
+     * Function is binding the data on the list.
+     */
     override fun onBindViewHolder(holder: CustomGiftAdapter.ViewHolder, position: Int) {
         holder.bindItems(giftList[position])
 
     }
 
-    //this method is giving the size of the list
+    /**
+     * Function returns the size of the list
+     */
     override fun getItemCount(): Int {
         return giftList.size
     }
 
     //the class is holding the list view
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val user = FirebaseAuth.getInstance()
-        val userDB = FirebaseFirestore.getInstance().collection("users").document(user.uid!!)
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) { //TODO refactor this
+        private val user = FirebaseAuth.getInstance()
+        private val userDB = FirebaseFirestore.getInstance().collection("users").document(user.uid!!)
 
         fun bindItems(gift: Gift_Details) {
 
@@ -248,11 +250,12 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
 
                 userDB.get().addOnCompleteListener{ task ->
                     if (task.isSuccessful) {
-                        val currencyString = normaliseCurrencyName(gift.currency)
-
                         val user = task.result!!
                         val builder = AlertDialog.Builder(itemView.context)
+                        val currencyString = (gift.context as MainActivity).normaliseCurrencyName(gift.currency)
 
+
+                        //create and build an alert dialog to show the gift's details
                         builder.setTitle("A user has sent you a coin!")
                         builder.setMessage("Another user has sent you a $currencyString - How generous <3\nBut how much? Accept the coin to find out! \nClick Accept to add the coin to your bank or click Discard to throw the coin away! \n\nWARNING: If you discard the coin, it is gone forever.")
 
@@ -260,21 +263,21 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
                             val coinsCollected = user.get("dailyCoinsCollected").toString().toInt()
                             userDB.update("dailyCoinsCollected", coinsCollected + 1)
 
-                            if (coinsCollected < 25){
+                            if (coinsCollected < 25){    //if user still within daily limit of collecting coins, coin is added to bank
                                 addGoldToBank(user, gift)
-                            } else {
+                            } else {                     // else the coin is sent to the wallet.
                                 addCoinToWallet(gift)
                             }
-                            removeCoinFromDatabase(gift)
+                            removeGiftFromUnacceptedCoins(gift) // coin is removed from the users unacceptedCoins
                         }
 
-                        builder.setNegativeButton("DISCARD") { dialog, which ->
+                        builder.setNegativeButton("DISCARD") { dialog, which -> // deletes the coin if the user chooses to click discard
                             Toast.makeText(itemView.context, "Discarding coin... what a waste...", Toast.LENGTH_LONG).show()
-                            removeCoinFromDatabase(gift)
+                            removeGiftFromUnacceptedCoins(gift)
                         }
 
                         val dialog: AlertDialog = builder.create()
-                        dialog.setCanceledOnTouchOutside(false)
+                        dialog.setCanceledOnTouchOutside(false) // prevents user from clicking out of dialog without making a choice.
                         dialog.show()
                     }
                 }
@@ -283,16 +286,27 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
             }
         }
 
+        /**
+         * Function to add a coin to the users bank.
+         * Converts the coin to gold based on the currency exchange rate and adds the gold to user's
+         * current goldInBank total on Cloud Firestore.
+         */
+
         private fun addGoldToBank(user : DocumentSnapshot, gift: Gift_Details) {
             val currentGoldInBank = user.get("goldInBank").toString().toFloat()
             val goldValueOfCoin = getCoinExchangeRate(gift.currency) * gift.strVal.toFloat()
             userDB.update("goldInBank", (currentGoldInBank + goldValueOfCoin))
 
             Toast.makeText(itemView.context, "Adding $goldValueOfCoin to bank account", Toast.LENGTH_LONG).show()
+
         }
 
-        fun addCoinToWallet(gift: Gift_Details){
-            Toast.makeText(itemView.context, "Cannot add any more coins to the bank today!", Toast.LENGTH_LONG).show()
+        /**
+         * Function to add a coin to the user's wallet.
+         * Used if the user is unable to cash the coin into the bank due to exceeding their limits.
+         */
+        private fun addCoinToWallet(gift: Gift_Details){
+            Toast.makeText(itemView.context, "Cannot add any more coins to the bank today! \n Coin has been added to your wallet", Toast.LENGTH_LONG).show()
 
             val coin = HashMap<String, Any>()
             coin.put("currency", gift.currency)
@@ -301,7 +315,11 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
             userDB.collection("wallet").document(gift.id).set(coin)
         }
 
-        private fun removeCoinFromDatabase(gift : Gift_Details) {
+        /**
+         * Function to remove a coin from the unacceptedCoins database.
+         * Used on acceptance or rejection of a gift.
+         */
+        private fun removeGiftFromUnacceptedCoins(gift : Gift_Details) {
             userDB.collection("unacceptedCoins").document(gift.id).delete().addOnSuccessListener {
                 Log.d("BankFragment", "coin has been successfully removed ${gift.id}, currency: ${gift.currency}, value: ${gift.strVal}")
             }

@@ -28,9 +28,8 @@
             android:layout_marginBottom="16dp"
             android:layout_toEndOf="@+id/imageView"
             android:text="line_1"
-            android:textColor="@android:color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textAppearance="@style/TextAppearance.AppCompat"
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/textView2"

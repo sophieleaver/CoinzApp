@@ -3,6 +3,8 @@ package com.example.sophie.coinzapp
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 
@@ -45,13 +47,14 @@ import org.json.JSONObject
 
 import java.text.SimpleDateFormat
 import java.util.*
-//Coin Exchange Rates
-var shilRate : Double = 0.0
-var dolrRate : Double = 0.0
-var quidRate : Double = 0.0
-var penyRate : Double = 0.0
 
-fun getCoinExchangeRate(currency: String) : Double {
+//Coin Exchange Rates
+var shilRate: Double = 0.0
+var dolrRate: Double = 0.0
+var quidRate: Double = 0.0
+var penyRate: Double = 0.0
+
+fun getCoinExchangeRate(currency: String): Double {
     var rate = 0.0
     when (currency) {
         "DOLR" -> rate = dolrRate
@@ -62,24 +65,26 @@ fun getCoinExchangeRate(currency: String) : Double {
     return rate
 }
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener{
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineListener, PermissionsListener {
     //mapbox and location variables
     private var mapView: MapView? = null
-    private var map : MapboxMap? = null
+    private var map: MapboxMap? = null
     private lateinit var originLocation: Location // where the current location is stored at all times
-    private lateinit var permissionsManager : PermissionsManager // removes code required for permissions
-    private lateinit var locationEngine : LocationEngine // component that gives user location
-    private lateinit var locationLayerPlugin : LocationLayerPlugin // provides location awareness to mobile - icons representation of user location
+    private lateinit var permissionsManager: PermissionsManager // removes code required for permissions
+    private lateinit var locationEngine: LocationEngine // component that gives user location
+    private lateinit var locationLayerPlugin: LocationLayerPlugin // provides location awareness to mobile - icons representation of user location
+
     //Firebase authentication and database variables
-    private lateinit var auth:  FirebaseAuth
-    private lateinit var db : FirebaseFirestore
-    private lateinit var userDB : DocumentReference
-    private lateinit var username : String
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
+    private lateinit var userDB: DocumentReference
+    private lateinit var username: String
 
     //other variables
     private val tag = "MainActivity"
-    private var iconStyle : String = ""
+    private var iconStyle: String = ""
     private var lastDownloadDate = "" // is in YYYY/MM/DD format
+    @SuppressLint("SimpleDateFormat")
     private val todayDate = SimpleDateFormat("YYYY/MM/dd").format(Calendar.getInstance().time) // TODO change formatting of this (android studio doesnt like)
     private var preferencesFile = "MyPrefsFile"
     lateinit var toolbar: ActionBar
@@ -92,16 +97,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         Mapbox.getInstance(this, "pk.eyJ1Ijoic29waGllbGVhdmVyIiwiYSI6ImNqbXRkdXdkdzE5NXozcWw4cHNtN2RxbjAifQ.qdD_mPQW_dthnmphOmiZRw")
         mapView = findViewById<View>(R.id.mapView) as MapView
         mapView!!.onCreate(savedInstanceState)
-        mapView?.getMapAsync (this)
+        mapView?.getMapAsync(this)
 
         //initialise firebase authentication and database instance variables
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
         userDB = db.collection("users").document(auth.uid!!)
-        userDB.get().addOnCompleteListener{ task ->
-            if (task.isSuccessful){
+        userDB.get().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
                 username = task.result!!.get("username").toString()
-                Log.d(tag,"username found $username")
+                Log.d(tag, "username found $username")
             }
 
         }
@@ -110,14 +115,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         bottomNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
     }
 
+    /**
+     * Function that allows navigation using the bottom navigation bar.
+     * When an icon is selected on the BNB, MainActivity creates the appropriate fragment and opens
+     * the fragment using OpenFragment(fragment).
+     */
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.navigation_map -> {
-                val mapFragment = MapsFragment.newInstance(shilRate,dolrRate,quidRate,penyRate)
+                val mapFragment = MapsFragment.newInstance(shilRate, dolrRate, quidRate, penyRate)
                 openFragment(mapFragment)
                 return@OnNavigationItemSelectedListener true
             }
-            R.id.navigation_bank-> {
+            R.id.navigation_bank -> {
                 val bankFragment = BankFragment.newInstance()
                 openFragment(bankFragment)
                 return@OnNavigationItemSelectedListener true
@@ -136,6 +146,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         false
     }
 
+    /**
+     * Opens the specified fragment by changing the container currently displayed on screen with
+     * the UI of the new fragment.
+     */
     private fun openFragment(fragment: android.support.v4.app.Fragment) {
         val transaction = supportFragmentManager.beginTransaction()
         transaction.replace(R.id.container, fragment)
@@ -174,16 +188,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                     lastDownloadDate = document.get("lastDownloadDate").toString()
                     Log.d(tag, "last download date = $lastDownloadDate, today date = $todayDate")
 
-                    if (lastDownloadDate != "" && lastDownloadDate != todayDate){ //if a map HAS been downloaded previously, delete it
+                    if (lastDownloadDate != "" && lastDownloadDate != todayDate) { //if a map HAS been downloaded previously, delete it and download todays map
 
                         val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
-                        removeCoinsAndDownloadNewMap(featureCollection)
+                        deleteCoinsInWallet()
+                        removeCoinsAndDownloadNewMap(featureCollection) //remove old coins before downloading todays map
 
-                    } else if( lastDownloadDate != todayDate){ //
-
+                    } else if (lastDownloadDate != todayDate) { //if first time downloading a map (user is new)
                         val featureCollection: FeatureCollection = FeatureCollection.fromJson(geoJsonDataString)
                         addFeaturesAsUncollectedCoins(featureCollection)
-
                     } else { //if the map has already been downloaded today, download the coins that have not been collected
                         addUncollectedCoinsToMap()
                     }
@@ -193,16 +206,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
             //once exchange rates have been set, set them in map fragment
             Log.d(tag, "opening mapfragment now")
             setMapStyle(currentMapStyle)
-            openFragment(MapsFragment.newInstance(shilRate,dolrRate,quidRate,penyRate))
+            openFragment(MapsFragment.newInstance(shilRate, dolrRate, quidRate, penyRate))
         }
     }
 
-    private fun removeCoinsAndDownloadNewMap(featureCollection: FeatureCollection){
+    private fun removeCoinsAndDownloadNewMap(featureCollection: FeatureCollection) { //TODO add desc.
         //remove all the uncollected coins from the users database
-        userDB.update("dailyCoinsCollected",0) // TODO check this works
-        val coinCollection  = userDB.collection("uncollectedCoins")
+        userDB.update("dailyCoinsCollected", 0) // TODO check this works
+        val coinCollection = userDB.collection("uncollectedCoins")
         coinCollection.get()
-                .addOnCompleteListener ( this) {task ->
+                .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
                         for (document in task.result!!) {
                             if (document.id != "nullCoin") {
@@ -218,25 +231,57 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
     }
 
-    private fun addFeaturesAsUncollectedCoins(featureColl : FeatureCollection){
+    /**
+     * Function deletes every coin in the wallet and the unaccepted coins except the nullCoin
+     */
+    private fun deleteCoinsInWallet(){
+        userDB.collection("wallet").get().addOnCompleteListener {task ->
+            if (task.isSuccessful){
+                for (coin in task.result!!){
+                    if (coin.id != "nullCoin") {
+                        userDB.collection("wallet").document(coin.id).delete()
+                    }
+                }
+            }
+        }
+        userDB.collection("unacceptedCoins").get().addOnCompleteListener {task ->
+            if (task.isSuccessful){
+                for (coin in task.result!!){
+                    if (coin.id != "nullCoin") {
+                        userDB.collection("unacceptedCoins").document(coin.id).delete()
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Function that adds all features within the FeatureCollection to the database.
+     * Creates a new document for each feature that allows the coin details to be stored
+     *
+     */
+    private fun addFeaturesAsUncollectedCoins(featureColl: FeatureCollection) {
         //iterate over feature collection and add markers
         Log.d(tag, "adding feature collection coins to database")
         val features = featureColl.features()
-        if (features != null) {
+
+        if (features != null) { //if the featurecollection is not null
             for (f in features) {
-                if (f !=null) {
+                if (f != null) { //and feature f is not null within the featurecollcetion
                     val point: Geometry? = f.geometry()
-                    if (point is Point) {
+                    if (point is Point) { // if the Feature is a Point then it is a coin
 
-                        //add marker to database
-                        val coin = HashMap<String, Any?>() //TODO add as user collection rather than new collection
+                        val coin = HashMap<String, Any?>() //
+                        val currency = f.getStringProperty("currency") // the tag form of the currency eg. PENY
+                        val currencyString = normaliseCurrencyName(currency) // the surface form of the currency eg. Penny
+                        val valueString = f.getStringProperty("value")
+                        val valueRounded = String.format("%.3f",valueString.toFloat())
+                        val snippet = "$currencyString, value: $valueRounded"
 
-                        val snippet = f.getStringProperty("currency") + ", value: " + f.getStringProperty("value")
-
-                        coin.put("lat",point.latitude())
-                        coin.put("long",point.longitude())
-                        coin.put("currency", f.getStringProperty("currency"))
-                        coin.put("value", f.getStringProperty("value"))
+                        coin.put("lat", point.latitude())
+                        coin.put("long", point.longitude())
+                        coin.put("currency", currency)
+                        coin.put("value", valueString)
                         coin.put("symbol", f.getStringProperty("marker-symbol"))
                         coin.put("snippet", snippet)
 
@@ -245,7 +290,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                                 .addOnSuccessListener { "DocumentSnapshot successfully written" }
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
-                        //userDB.collection("uncollectedCoins").document("nullCoin").delete() //delete the null coin that the collection is initalised with (if it exists)
                     }
                 }
             }
@@ -258,82 +302,97 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
     }
 
+    /**
+     * Removes the specified marker from the map.
+     */
     private fun removeAllMarkers() {
-        for(marker : Marker in map!!.markers){
+        for (marker: Marker in map!!.markers) {
             map!!.removeMarker(marker)
         }
     }
 
-    private fun addUncollectedCoinsToMap(){
+    private fun addUncollectedCoinsToMap() {
         //iterate over feature collection and add markers
 
-        val coinCollection  = userDB.collection("uncollectedCoins")
+        val coinCollection = userDB.collection("uncollectedCoins")
 
         coinCollection.get()
-        .addOnCompleteListener ( this) {task ->
-                if (task.isSuccessful) {
-                    Log.d(tag, "adding uncollected coins to map")
-                    for (document in task.result!!) {
-                        if (document.id != "nullCoin") {
-                            //TODO only add if id is of correct structure and date is todays date
-                            val lat = document.get("lat").toString().toDouble()
-                            val long = document.get("long").toString().toDouble()
-                            val currency = document.get("currency").toString()
-                            val symbol = document.get("symbol").toString()
-                            val snippet = document.get("snippet").toString()
+                .addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        Log.d(tag, "adding uncollected coins to map")
+                        for (document in task.result!!) { // iterates over every coin entry in uncollectedCoins
+                            if (document.id != "nullCoin") {
 
-                            //find which icon to add
-                            val icon = findIcon(currency, symbol)
+                                //retrieves the attributes from the coin document
+                                val lat = document.get("lat").toString().toDouble()
+                                val long = document.get("long").toString().toDouble()
+                                val currency = document.get("currency").toString()
+                                val symbol = document.get("symbol").toString()
+                                val snippet = document.get("snippet").toString()
 
-                            map!!.addMarker(MarkerOptions()
-                                    .position(LatLng(lat, long))
-                                    .icon(icon)
-                                    .snippet(snippet)) // add the marker to the map
+                                //find which icon to add based on currency and symbol(value) of the coin
+                                val icon = findIcon(currency, symbol)
 
-                        }}
-                } else {
-                    Log.d(tag, "Error getting documents: ", task.exception)
+                                //creates a new marker using MarkerOptions and adds the marker to the map
+                                map!!.addMarker(MarkerOptions()
+                                        .position(LatLng(lat, long))
+                                        .icon(icon)
+                                        .snippet(snippet))
+                            }
+                        }
+                    } else {
+                        Log.d(tag, "Error getting documents: ", task.exception)
+                    }
                 }
-            }
 
 
     }
 
-    private fun findIcon(currency : String, coinSymbol : String) : Icon {
-        var icons = resources.obtainTypedArray(R.array.original_quid_icons)
+    /**
+     * Function to determine which 'set' of marker coins are to be used.
+     * findIcon takes the currency of the coin and the value of the coin and combines this
+     * with the currently set user coin style.
+     * The function finds the appropriate colour of the set (each currency has a different colour,
+     * but this colour is dependent on the style chosen).
+     * The correct marker is then returned from the typed array found in Resources.
+     */
+    private fun findIcon(currency: String, coinSymbol: String): Icon {
+        var icons = resources.obtainTypedArray(R.array.original_quid_icons) //icons default to yellow if there is an issue in determining the set
         Log.d(tag, "adding coins of currency $currency to the map")
         when (currency) {
             "DOLR" -> when (iconStyle) {
                 "original" -> icons = resources.obtainTypedArray(R.array.original_dollar_icons)
                 "pale" -> icons = resources.obtainTypedArray((R.array.pale_dollar_icons))
-                "party"-> icons = resources.obtainTypedArray(R.array.party_dollar_icons)
-                "dark"-> icons = resources.obtainTypedArray(R.array.dark_dollar_icons)
+                "party" -> icons = resources.obtainTypedArray(R.array.party_dollar_icons)
+                "dark" -> icons = resources.obtainTypedArray(R.array.dark_dollar_icons)
             }
             "PENY" -> when (iconStyle) {
                 "original" -> icons = resources.obtainTypedArray(R.array.original_penny_icons)
                 "pale" -> icons = resources.obtainTypedArray((R.array.pale_penny_icons))
-                "party"-> icons = resources.obtainTypedArray(R.array.party_penny_icons)
-                "dark"-> icons = resources.obtainTypedArray(R.array.dark_penny_icons)
+                "party" -> icons = resources.obtainTypedArray(R.array.party_penny_icons)
+                "dark" -> icons = resources.obtainTypedArray(R.array.dark_penny_icons)
             }
             "SHIL" -> when (iconStyle) {
                 "original" -> icons = resources.obtainTypedArray(R.array.original_shilling_icons)
                 "pale" -> icons = resources.obtainTypedArray((R.array.pale_shilling_icons))
-                "party"-> icons = resources.obtainTypedArray(R.array.party_shilling_icons)
-                "dark"-> icons = resources.obtainTypedArray(R.array.dark_shilling_icons)
+                "party" -> icons = resources.obtainTypedArray(R.array.party_shilling_icons)
+                "dark" -> icons = resources.obtainTypedArray(R.array.dark_shilling_icons)
             }
             "QUID" -> when (iconStyle) {
                 "original" -> icons = resources.obtainTypedArray(R.array.original_quid_icons)
                 "pale" -> icons = resources.obtainTypedArray((R.array.pale_quid_icons))
-                "party"-> icons = resources.obtainTypedArray(R.array.party_quid_icons)
-                "dark"-> icons = resources.obtainTypedArray(R.array.dark_quid_icons)
+                "party" -> icons = resources.obtainTypedArray(R.array.party_quid_icons)
+                "dark" -> icons = resources.obtainTypedArray(R.array.dark_quid_icons)
             }
         }
 
+        //the icon with the correct number is found from the set found above
+        //(each set is a typed array, where a marker for a coin of value 1 is held in index 1)
         val iconFile = icons.getResourceId(Integer.parseInt(coinSymbol), 0)
         return IconFactory.getInstance(this).fromResource(iconFile)
     }
 
-    private fun collectCoin(coinID : String, currency : String, coinValue : Float, mapboxMap: MapboxMap) { //TODO make private??
+    private fun collectCoin(coinID: String, currency: String, coinValue: Float, mapboxMap: MapboxMap) { //TODO make private??
         Log.d(tag, "collectCoin $coinID begins")
 
         userDB.get().addOnCompleteListener { task ->
@@ -354,7 +413,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
                 } else { // above 25 coins, add the coin (unexchanged) to the users wallet
                     Log.d(tag, "add to wallet: coinID - value: $coinValue currency: $currency")
-                    val coin = HashMap<String,Any?>()
+                    val coin = HashMap<String, Any?>()
                     coin.put("currency", currency)
                     coin.put("value", coinValue)
 
@@ -365,7 +424,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                 //remove the collected coin from user's database collection "uncollectedCoins"
 
                 userDB.collection("uncollectedCoins").document(coinID).delete()
-                Log.d(tag, "updating user coins collected with " + (size +1).toString())
+                Log.d(tag, "updating user coins collected with " + (size + 1).toString())
                 userDB.update("dailyCoinsCollected", size + 1)
 
                 val totalCoins = Integer.parseInt(task.result!!.get("totalCoinsCollected").toString())
@@ -382,8 +441,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
     private fun checkForCoinAchievements() {
 
-        userDB.get().addOnCompleteListener{task ->
-            if (task.isSuccessful){
+        userDB.get().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
                 val coinsCollected = Integer.parseInt(task.result!!.get("totalCoinsCollected").toString())
 
                 val newAchievement = coinsCollected == 1 || coinsCollected == 100 || coinsCollected == 1000
@@ -410,14 +469,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
     }
 
-
-    public fun convertCoinToGold(currency : String, value : Float) : Float{
+    /**
+     * Function to determine the value of the coin in gold, using the coin's currency
+     * and the current exchange rate for that currency.
+     */
+    private fun convertCoinToGold(currency: String, value: Float): Float {
         val rate = getCoinExchangeRate(currency).toFloat()
-        val gold = rate * value
-        return gold
+        return rate * value
     }
 
-    private fun setDailyExchangeRates(geoJsonDataString : String) {
+    /**
+     * Function to set the daily exchange rates for each currency from the geoJson data
+     */
+    private fun setDailyExchangeRates(geoJsonDataString: String) {
         val todaysRates = JSONObject(geoJsonDataString).getJSONObject("rates")
 
         shilRate = todaysRates.getDouble("SHIL")
@@ -427,14 +491,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     }
 
 
-
     override fun onLocationChanged(location: Location?) {
         if (location == null) {
             Log.d(tag, "[onLocationChanged] location is null")
         } else {
+            if (!isNetworkAvailable()){
+                Toast.makeText(this, "No network connection detected, please reconnect to collect coins", Toast.LENGTH_LONG).show()
+            }
             originLocation = location
-            setCameraPosition(location) // changed from originLocation
-            checkCoinLocations(location)
+            setCameraPosition(location)
+            checkCoinLocations(location) // check to see if a coin can be collected whenever the user's location changes
         }
     }
 
@@ -446,7 +512,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
                         for (document in task.result!!) {
-                            //TODO only add if id is of correct structure and date is todays date
                             if (document.id != "nullCoin") {
                                 val lat = document.get("lat").toString().toDouble()
                                 val long = document.get("long").toString().toDouble()
@@ -471,37 +536,55 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                 }
     }
 
-    fun getCoinStyle() : String {
+    //getters and setters for coin style
+    fun getCoinStyle(): String {
         return iconStyle
     }
 
-    fun setCoinStyle(s : String){
-        iconStyle = s
+    fun setCoinStyle(newCoinStyle: String) {
+        iconStyle = newCoinStyle
         Log.d(tag, "icon style is now $iconStyle")
-        removeAllMarkers()
-        addUncollectedCoinsToMap()
+
+        removeAllMarkers() // removes all markers of the previous coin style
+        addUncollectedCoinsToMap() // re-adds all the markers with the new coin style
     }
 
-    fun setMapStyle(style : String){
-            //use style string to get map identifier
-        val url = getMapStyleURL(style)
-            //use map identifier to get map style URL
-        val urlID = resources.getString(url)
-        map!!.setStyleUrl(urlID)
-        Log.d(tag, "map style is now $style")
+    //sets the map newMapStyle
+    fun setMapStyle(newMapStyle: String) {
+        val mapStyleUrl = getMapStyleURL(newMapStyle) // gets the URL for the new map style using getMapStyleUrl
+        map!!.setStyleUrl(mapStyleUrl) // sets the new map style using the mapbox URL
+        Log.d(tag, "map newMapStyle is now $newMapStyle")
     }
 
-    fun getMapStyleURL(style : String): Int {
-        var result = 0
+    /**
+     * Function to retrieve the style url for the specified style from Resources.
+     * Returns the url for the style.
+     */
+    fun getMapStyleURL(style: String): String {
+        var result = ""
         when (style) {
-            "dark" -> result =  R.string.dark_map_url
-            "original" -> result = R.string.original_map_url
-            "pale" -> result = R.string.pale_map_url
+            "dark" -> result = resources.getString(R.string.dark_map_url)
+            "original" -> result = resources.getString(R.string.original_map_url)
+            "pale" -> result = resources.getString(R.string.pale_map_url)
         }
         return result
     }
 
-//------ all Location and permissions methods ------
+    /**
+     *  Function to change a currency from token form to surface form for the user display.
+    */
+    fun normaliseCurrencyName(currency: String) : String{
+        var result = ""
+        when (currency){
+            "SHIL" -> result = "Shilling"
+            "DOLR" -> result = "Dollar"
+            "QUID" -> result = "Quid"
+            "PENY" -> result = "Penny"
+        }
+        return result
+    }
+
+//----------------------- all Location and permissions methods ---------------------------
 
     private fun enableLocation() {
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
@@ -528,20 +611,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
         val lastLocation = locationEngine.lastLocation
         if (lastLocation != null) {
-            originLocation = lastLocation // set origin loc as the last loc
+            originLocation = lastLocation // set origin location as the last location
             setCameraPosition(lastLocation)
         } else // if last location does not exist
-        { locationEngine.addLocationEngineListener(this) }
+        {
+            locationEngine.addLocationEngineListener(this)
+        }
     }
 
     @SuppressWarnings("MissingPermission")
     private fun initialiseLocationLayer() {
-        if (mapView == null) { Log.d(tag, "mapView is null") }
-        else {
-            if (map == null) { Log.d(tag, "map is null") }
-            else {
+        if (mapView == null) {
+            Log.d(tag, "mapView is null")
+        } else {
+            if (map == null) {
+                Log.d(tag, "map is null")
+            } else {
                 locationLayerPlugin = LocationLayerPlugin(mapView!!, map!!, locationEngine)
-                locationLayerPlugin.apply { setLocationLayerEnabled(true) // enables camera tracking location
+                locationLayerPlugin.apply {
+                    setLocationLayerEnabled(true) // enables camera tracking location
                     cameraMode = CameraMode.TRACKING // tracks change in loc.
                     renderMode = RenderMode.NORMAL
                 }
@@ -549,7 +637,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
     }
 
-    private fun setCameraPosition(location: Location) { //TODO create a reset orientation/angle/location button???
+    private fun setCameraPosition(location: Location) {
         // set camera location
         val latlng = LatLng(location.latitude, location.longitude)
         map?.animateCamera(CameraUpdateFactory.newLatLng(latlng))
@@ -578,17 +666,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         mapView!!.onSaveInstanceState(outState)
         super.onSaveInstanceState(outState)
+
+
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
+    private fun isNetworkAvailable(): Boolean{
+        val connectivityManager = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
+        val isConnected: Boolean = activeNetwork?.isConnectedOrConnecting == true
+        return isConnected
     }
+
+
 
 //-------------- methods for change of app state -------------------
 
@@ -622,9 +716,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         //turn off permissions on stop
         super.onStop()
 
-        // All objects are from android.context.Context
         val settings = getSharedPreferences(preferencesFile, Context.MODE_PRIVATE)
-        val editor = settings.edit() // editor = makes pref changes
+        val editor = settings.edit() // editor = makes preference changes
+        //save the current set icon and map styles
         editor.putString("lastIconStyle", iconStyle)
         editor.putString("lastMapStyle", currentMapStyle)
         editor.apply() // apply edits
