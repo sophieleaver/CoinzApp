@@ -1,7 +1,6 @@
 package com.example.sophie.coinzapp
 
 
-import android.app.Activity
 import android.content.Intent
 import android.support.test.espresso.Espresso.onView
 import android.support.test.espresso.action.ViewActions.*
@@ -11,19 +10,10 @@ import android.support.test.filters.LargeTest
 import android.support.test.rule.ActivityTestRule
 import android.support.test.rule.GrantPermissionRule
 import android.support.test.runner.AndroidJUnit4
-import android.support.v4.content.ContextCompat.startActivity
 import android.util.Log
-import android.view.View
-import android.view.ViewGroup
-import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import org.hamcrest.Description
-import org.hamcrest.Matcher
-import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.allOf
-import org.hamcrest.TypeSafeMatcher
-import org.hamcrest.core.IsInstanceOf
 import org.junit.*
 import org.junit.runner.RunWith
 
@@ -139,7 +129,6 @@ class UnsuccessfulPurchaseMapStyleTest {
             val textView3 = onView(
                     allOf(withId(R.id.gold_in_bank_display)))
             textView3.check(matches(withText("24000")))
-            auth.signOut()
     }
 
 }

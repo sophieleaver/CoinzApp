@@ -1,12 +1,10 @@
 package com.example.sophie.coinzapp
 
 import android.os.AsyncTask
-import com.example.sophie.coinzapp.DownloadCompleteRunner.result
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import javax.net.ssl.HttpsURLConnection
 
 class DownloadFileTask(private val caller : DownloadCompleteListener) : AsyncTask<String, Void, String>(){
 
@@ -18,8 +16,7 @@ class DownloadFileTask(private val caller : DownloadCompleteListener) : AsyncTas
 
         private fun loadFileFromNetwork(urlString : String) : String {
             val stream : InputStream = downloadUrl(urlString)
-            val inputAsString : String =  stream.bufferedReader().use { it.readText() }
-            return inputAsString
+            return stream.bufferedReader().use { it.readText() }
         }
 
         @Throws(IOException::class)

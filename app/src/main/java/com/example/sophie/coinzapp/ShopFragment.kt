@@ -12,7 +12,6 @@ import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
-import com.mapbox.mapboxsdk.maps.MapboxMap
 import org.jetbrains.anko.find
 
     var currentCoinStyle = ""
@@ -22,16 +21,13 @@ class ShopFragment : Fragment(), View.OnClickListener {
     private val userDB = FirebaseFirestore.getInstance().collection("users").document(FirebaseAuth.getInstance().uid!!)
     private val userPurchasedCoins = userDB.collection("purchasedCoins").get()
     private val userPurchasedMaps = userDB.collection("purchasedMaps").get()
-//    var mapbox : MapboxMap? = null
     private val coinCost = 10000
     private val mapCost = 25000
     private val fragTag = "ShopFragment"
 
     companion object {
         @JvmStatic
-        fun newInstance(map : MapboxMap) : ShopFragment = ShopFragment().apply {
-//            mapbox = map
-        }
+        fun newInstance() = ShopFragment()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -160,15 +156,16 @@ class ShopFragment : Fragment(), View.OnClickListener {
         dialog.show()
     }
 
+    /**
+    find the 'index' of the style in the database:
+    The function takes a string 'style' that represents the style of the coin set
+    or map.
+    Function returns the the index of the style within the users database as the database
+    stores by alphabetical order.
+    Allows for simplified access of the style in the user database
+     */
+
     fun findIndex(style : String) : Int {
-        /*
-        find the 'index' of the style in the database:
-        The function takes a string 'style' that represents the style of the coin set
-        or map.
-        Function returns the the index of the style within the users database as the database
-        stores by alphabetical order.
-        Allows for simplified access of the style in the user database
-         */
         var index = 0
         when (style) {
             "dark" -> index = 0
@@ -244,10 +241,10 @@ class ShopFragment : Fragment(), View.OnClickListener {
         }
     }
 
-    fun updateGoldSpent(document: DocumentSnapshot, cost : Int){
+    fun updateGoldSpent(doc: DocumentSnapshot, cost : Int){
         Log.d(fragTag, "updating the gold spent in shop")
         //update the total gold spent
-        var goldSpent = document.get("totalGoldSpent").toString().toInt()
+        var goldSpent = doc.get("totalGoldSpent").toString().toInt()
         goldSpent += cost
         userDB.update("totalGoldSpent", goldSpent)
         //check if any new achievements the user could have won
@@ -270,10 +267,10 @@ class ShopFragment : Fragment(), View.OnClickListener {
             userDB.collection("achievements").get().addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val documents = task.result!!.documents
-                    for (document in documents){
-                        if (document.id.equals(achievement)){
-                            Log.d(fragTag, "accessing document ${document.id} now")
-                            val alreadyAchieved = document.get("status").toString().toBoolean()
+                    for (doc in documents){
+                        if (doc.id.equals(achievement)){
+                            Log.d(fragTag, "accessing doc ${doc.id} now")
+                            val alreadyAchieved = doc.get("status").toString().toBoolean()
 
                             if (!alreadyAchieved) {
                                 userDB.collection("achievements").document(achievement)

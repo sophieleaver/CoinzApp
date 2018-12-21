@@ -18,8 +18,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.android.synthetic.main.acheivement_item.view.*
-import kotlinx.android.synthetic.main.fragment_bank.view.*
-import kotlinx.android.synthetic.main.fragment_settings.*
 import kotlinx.android.synthetic.main.fragment_settings.view.*
 import java.util.ArrayList
 
@@ -66,7 +64,6 @@ class SettingsFragment : Fragment(), View.OnClickListener {
     override fun onClick(v: View?) {
      when (v?.id){
          R.id.button_log_out -> {
-             val auth = FirebaseAuth.getInstance().signOut()
              startActivity(Intent(activity, LoginActivity::class.java))
              (activity as Activity).overridePendingTransition(0, 0)
          }

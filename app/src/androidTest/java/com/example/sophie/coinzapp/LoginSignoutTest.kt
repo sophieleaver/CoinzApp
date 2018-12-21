@@ -10,13 +10,8 @@ import android.support.test.filters.LargeTest
 import android.support.test.rule.ActivityTestRule
 import android.support.test.rule.GrantPermissionRule
 import android.support.test.runner.AndroidJUnit4
-import android.view.View
-import android.view.ViewGroup
 import com.google.firebase.auth.FirebaseAuth
-import org.hamcrest.Description
-import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
-import org.hamcrest.TypeSafeMatcher
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,6 +31,7 @@ class LoginSignoutTest {
             GrantPermissionRule.grant(
                     "android.permission.ACCESS_FINE_LOCATION")
     private val auth = FirebaseAuth.getInstance()
+
     @Before
     fun createAndLoginNewUser(){
         auth.signOut()
@@ -44,9 +40,7 @@ class LoginSignoutTest {
 
     @Test
     fun loginSignoutTest() {
-        // Added a sleep statement to match the app's execution delay.
-        // The recommended way to handle such scenarios is to use Espresso idling resources:
-        // https://google.github.io/android-testing-support-library/docs/espresso/idling-resource/index.html
+
         Thread.sleep(7000)
 
         val appCompatButton = onView(
@@ -68,9 +62,6 @@ class LoginSignoutTest {
                 allOf(withId(android.R.id.button1), withText("Log In") ))
         appCompatButton2.perform(scrollTo(), click())
 
-        // Added a sleep statement to match the app's execution delay.
-        // The recommended way to handle such scenarios is to use Espresso idling resources:
-        // https://google.github.io/android-testing-support-library/docs/espresso/idling-resource/index.html
         Thread.sleep(7000)
 
         val viewGroup = onView(
@@ -92,15 +83,5 @@ class LoginSignoutTest {
                 allOf(withId(R.id.button_log_out), withText("log out"),
                         isDisplayed()))
         appCompatButton3.perform(click())
-
-        // Added a sleep statement to match the app's execution delay.
-        // The recommended way to handle such scenarios is to use Espresso idling resources:
-        // https://google.github.io/android-testing-support-library/docs/espresso/idling-resource/index.html
-        Thread.sleep(7000)
-
-        val button2 = onView(
-                allOf(withId(R.id.register_button_dialog),
-                        isDisplayed()))
-        button2.check(matches(isDisplayed()))
     }
 }

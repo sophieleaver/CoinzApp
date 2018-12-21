@@ -35,7 +35,7 @@ class BankFragment : Fragment(){
                 val document = task.result!!
 
                 goldInBank = (document.get("goldInBank").toString().toFloat().toInt())
-                gold_in_bank_display.text = "$goldInBank" //TODO there are issues with nulls here to be fixed.
+                gold_in_bank_display.text = "$goldInBank"
 
                 Log.d(fragTag, "gold in bank = $goldInBank")
             }
@@ -118,10 +118,6 @@ class BankFragment : Fragment(){
                 val value = doc.document.get("value").toString()
 
                 if (doc.type == DocumentChange.Type.ADDED && doc.document.id != "nullCoin") {
-                    Log.d(fragTag, "${doc.document.id}")
-                    Log.d(fragTag, "${currency}")
-                    Log.d(fragTag, "${value}")
-                    Log.d(fragTag, "${context}")
                     gifts.add(Gift_Details(coinID, currency, value, context!!))
                     view.recyclerView_unacceptedCoins.adapter.notifyDataSetChanged()
                 }
@@ -244,7 +240,7 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
     }
 
     //the class is holding the list view
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) { //TODO refactor this
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val user = FirebaseAuth.getInstance()
         private val userDB = FirebaseFirestore.getInstance().collection("users").document(user.uid!!)
 
@@ -263,6 +259,7 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
                         builder.setTitle("A user has sent you a coin!")
                         builder.setMessage("Another user has sent you a $currencyString - How generous <3\nBut how much? Accept the coin to find out! \nClick Accept to add the coin to your bank or click Discard to throw the coin away! \n\nWARNING: If you discard the coin, it is gone forever.")
 
+                        //create positive accept button
                         builder.setPositiveButton("ACCEPT") { dialog, which ->
                             val coinsCollected = user.get("dailyCoinsCollected").toString().toInt()
                             userDB.update("dailyCoinsCollected", coinsCollected + 1)
@@ -275,11 +272,13 @@ class CustomGiftAdapter(val giftList: ArrayList<Gift_Details>) : RecyclerView.Ad
                             removeGiftFromUnacceptedCoins(gift) // coin is removed from the users unacceptedCoins
                         }
 
+                        //create negative discard button
                         builder.setNegativeButton("DISCARD") { dialog, which -> // deletes the coin if the user chooses to click discard
                             Toast.makeText(itemView.context, "Discarding coin... what a waste...", Toast.LENGTH_LONG).show()
                             removeGiftFromUnacceptedCoins(gift)
                         }
 
+                        //show the dialog
                         val dialog: AlertDialog = builder.create()
                         dialog.setCanceledOnTouchOutside(false) // prevents user from clicking out of dialog without making a choice.
                         dialog.show()

@@ -2,7 +2,6 @@ package com.example.sophie.coinzapp
 
 
 import android.content.Intent
-import android.support.test.espresso.Espresso.onData
 import android.support.test.espresso.Espresso.onView
 import android.support.test.espresso.assertion.ViewAssertions.matches
 import android.support.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -10,13 +9,8 @@ import android.support.test.espresso.matcher.ViewMatchers.withId
 import android.support.test.filters.LargeTest
 import android.support.test.rule.ActivityTestRule
 import android.support.test.runner.AndroidJUnit4
-import android.view.View
-import android.view.ViewGroup
 import com.google.firebase.auth.FirebaseAuth
-import org.hamcrest.Description
-import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
-import org.hamcrest.TypeSafeMatcher
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -47,6 +41,5 @@ class LoginActivityCheck {
                 allOf(withId(R.id.register_button_dialog),
                         isDisplayed()))
         button.check(matches(isDisplayed()))
-        auth.signOut()
     }
 }

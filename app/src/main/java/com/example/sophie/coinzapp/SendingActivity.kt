@@ -2,7 +2,7 @@ package com.example.sophie.coinzapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
@@ -21,7 +21,6 @@ import kotlinx.android.synthetic.main.content_sending.*
 import kotlinx.android.synthetic.main.user_item.view.*
 import org.jetbrains.anko.find
     var coinCurrency : String = ""
-//    var coinCurrencyString : String = ""
     var coinValue : String = ""
     var coinID : String = ""
 
@@ -38,7 +37,6 @@ class SendingActivity : AppCompatActivity(), View.OnClickListener {
         setContentView(R.layout.activity_sending)
 
         coinCurrency = intent.extras.getString("currency")
-//        coinCurrencyString = intent.extras.getString("currencyString")
         coinValue = intent.extras.getString("value")
         coinID = intent.extras.getString("id")
         Log.d(tag, "sending coin of currency $coinCurrency and value $coinValue")
@@ -52,7 +50,7 @@ class SendingActivity : AppCompatActivity(), View.OnClickListener {
         button2.setOnClickListener(this)
 
         val recycler = recyclerView_friends
-        val obj_adapter = CustomAdapter(users)
+        var obj_adapter = CustomAdapter(users)
         recycler.setHasFixedSize(true)
 
         recycler.layoutManager = LinearLayoutManager(this, LinearLayout.VERTICAL, false)
@@ -72,7 +70,7 @@ class SendingActivity : AppCompatActivity(), View.OnClickListener {
             } else {
                 Log.d(tag, "Error getting documents: ", task.exception)
             }
-            val obj_adapter = CustomAdapter(users)
+            obj_adapter = CustomAdapter(users)
             recyclerView_friends.layoutManager = LinearLayoutManager(this, LinearLayout.VERTICAL, false)
             recyclerView_friends.adapter = obj_adapter
 
@@ -92,13 +90,13 @@ class SendingActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    fun addNewFriend(){
+    private fun addNewFriend(){
 
         val enteredUsername = fieldUsername.text.toString()
 
         //iterate over user database until find a matching username
         db.collection("users").get().addOnCompleteListener{ task ->
-            if (task.isSuccessful!!){
+            if (task.isSuccessful){
 
                 var foundUser = false // boolean : returns true if a user of specified username exists
 
@@ -144,10 +142,12 @@ class SendingActivity : AppCompatActivity(), View.OnClickListener {
 }
 
 //--------------------------------- end of SendingActivity.kt -----------
+
+
 //---------------------------------start of User Details class ----------
 data class User_Details(val name:String)
 
-class CustomAdapter(val userList: ArrayList<User_Details>) : RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
+class CustomAdapter(private val userList: ArrayList<User_Details>) : RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
 
     //this method is returning the view for each item in the list
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CustomAdapter.ViewHolder {
@@ -183,14 +183,14 @@ class CustomAdapter(val userList: ArrayList<User_Details>) : RecyclerView.Adapte
 
                                     val sentCoin = HashMap<String, Any>()
                                     sentCoin.put("currency", coinCurrency)
-//                                    sentCoin.put("currencyString", coinCurrencyString)
                                     sentCoin.put("value", coinValue)
 
                                     userDB.document(document.id).collection("unacceptedCoins").add(sentCoin)
 
                                     //remove coin from current users wallet
                                     userDB.document(auth.uid!!).collection("wallet").document(coinID).delete()
-                                    checkForAchievements() //TODO increase sent coins by 1 when coin is sent
+                                    checkForAchievements()
+
                                     //return back to main activity
                                     itemView.context.startActivity(Intent(itemView.context, MainActivity::class.java))
                                 }

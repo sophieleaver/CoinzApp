@@ -12,7 +12,6 @@ import android.support.v7.app.ActionBar
 import android.support.v7.app.AppCompatActivity
 
 import android.util.Log
-import android.view.Menu
 
 import android.view.View
 import android.widget.Toast
@@ -74,7 +73,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     private var iconStyle: String = ""
     private var lastDownloadDate = "" // is in YYYY/MM/DD format
     @SuppressLint("SimpleDateFormat")
-    private val todayDate = SimpleDateFormat("YYYY/MM/dd").format(Calendar.getInstance().time) // TODO change formatting of this (android studio doesnt like)
+    private val todayDate = SimpleDateFormat("YYYY/MM/dd").format(Calendar.getInstance().time)
     private var preferencesFile = "MyPrefsFile"
     lateinit var toolbar: ActionBar
 
@@ -122,7 +121,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_shop -> {
-                val shopFragment = ShopFragment.newInstance(map!!)
+                val shopFragment = ShopFragment.newInstance()
                 openFragment(shopFragment)
                 return@OnNavigationItemSelectedListener true
             }
@@ -163,7 +162,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
             val testGeoJsonUrl = "http://homepages.inf.ed.ac.uk/stg/coinz/$todayDate/coinzmap.geojson"
             Log.d(tag, "URL is $testGeoJsonUrl")
-            val geoJsonDataString = DownloadFileTask(caller = DownloadCompleteRunner).execute(testGeoJsonUrl).get() // TODO check on listener functionality
+            val geoJsonDataString = DownloadFileTask(caller = DownloadCompleteRunner).execute(testGeoJsonUrl).get()
 
             val geoJsonSource = GeoJsonSource("geojson", geoJsonDataString) // create new GeoJsonSource from string json map data
             mapboxMap.addSource(geoJsonSource) // add source to the map
@@ -199,9 +198,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         }
     }
 
-    private fun removeCoinsAndDownloadNewMap(featureCollection: FeatureCollection) { //TODO add desc.
+    /**
+     * Removes current markers from the map, initiates addFeaturesAsUncollectedCoins on complete
+     * to download todays map
+     */
+    private fun removeCoinsAndDownloadNewMap(featureCollection: FeatureCollection) {
         //remove all the uncollected coins from the users database
-        userDB.update("dailyCoinsCollected", 0) // TODO check this works
+        userDB.update("dailyCoinsCollected", 0)
         val coinCollection = userDB.collection("uncollectedCoins")
         coinCollection.get()
                 .addOnCompleteListener(this) { task ->
@@ -276,7 +279,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
 
                         userDB.collection("uncollectedCoins").document(f.getStringProperty("id")) // check firestore tutorial
                                 .set(coin)
-                                .addOnSuccessListener { "DocumentSnapshot successfully written" }
                                 .addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
 
                     }
@@ -381,7 +383,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         return IconFactory.getInstance(this).fromResource(iconFile)
     }
 
-    private fun collectCoin(coinID: String, currency: String, coinValue: Float, mapboxMap: MapboxMap) { //TODO make private??
+    private fun collectCoin(coinID: String, currency: String, coinValue: Float) {
         Log.d(tag, "collectCoin $coinID begins")
 
         userDB.get().addOnCompleteListener { task ->
@@ -407,7 +409,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                     coin.put("value", coinValue)
 
                     //val coinDoc = userDB.collection("uncollectedCoins").document(document.id)
-                    userDB.collection("wallet").document(coinID).set(coin).addOnFailureListener { e -> Log.w(tag, "Error adding document", e) } // TODO fix?
+                    userDB.collection("wallet").document(coinID).set(coin).addOnFailureListener { e -> Log.w(tag, "Error adding document", e) }
                 }
 
                 //remove the collected coin from user's database collection "uncollectedCoins"
@@ -447,7 +449,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                     Log.d(tag, "updating achievement $achievement")
 
                     userDB.collection("achievements").document(achievement)
-                            .update("status", true).addOnFailureListener { task ->
+                            .update("status", true).addOnFailureListener { _ ->
                                 Log.d(tag, "achievement update failed!")
                             }
 
@@ -516,7 +518,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
                                     val currency = document.get("currency").toString()
                                     val value = (document.get("value").toString()).toFloat()
                                     Log.d(tag, "user close to coin $coinID")
-                                    collectCoin(coinID, currency, value, map!!)
+                                    collectCoin(coinID, currency, value)
                                     closeToCoin = false
                                 }
                             }
@@ -651,7 +653,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
     }
 
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {
-        // TODO present a dialog on why access is needed
         Log.d(tag, "Permissions: $permissionsToExplain")
     }
 
@@ -659,8 +660,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, LocationEngineList
         Log.d(tag, "[onPermissionResult] granted == $granted")
         if (granted) {
             enableLocation()
-        } else {
-            // TODO Open a dialogue with the user
         }
     }
 
