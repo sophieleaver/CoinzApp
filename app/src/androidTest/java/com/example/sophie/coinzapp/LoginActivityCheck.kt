@@ -26,6 +26,9 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class LoginActivityCheck {
 
+    /**
+     * Checks that the LoginActivity is the first activity on opening the app
+     */
     @Rule
     @JvmField
     var mActivityTestRule = ActivityTestRule(LoginActivity::class.java)
@@ -38,9 +41,6 @@ class LoginActivityCheck {
     }
     @Test
     fun loginActivityCheck() {
-        // Added a sleep statement to match the app's execution delay.
-        // The recommended way to handle such scenarios is to use Espresso idling resources:
-        // https://google.github.io/android-testing-support-library/docs/espresso/idling-resource/index.html
         Thread.sleep(7000)
 
         val button = onView(

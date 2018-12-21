@@ -118,6 +118,10 @@ class BankFragment : Fragment(){
                 val value = doc.document.get("value").toString()
 
                 if (doc.type == DocumentChange.Type.ADDED && doc.document.id != "nullCoin") {
+                    Log.d(fragTag, "${doc.document.id}")
+                    Log.d(fragTag, "${currency}")
+                    Log.d(fragTag, "${value}")
+                    Log.d(fragTag, "${context}")
                     gifts.add(Gift_Details(coinID, currency, value, context!!))
                     view.recyclerView_unacceptedCoins.adapter.notifyDataSetChanged()
                 }

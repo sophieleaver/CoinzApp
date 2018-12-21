@@ -135,9 +135,11 @@ class UnsuccessfulPurchaseMapStyleTest {
                             isDisplayed()))
             bottomNavigationItemView3.perform(click())
             Thread.sleep(7000)
+
             val textView3 = onView(
                     allOf(withId(R.id.gold_in_bank_display)))
             textView3.check(matches(withText("24000")))
+            auth.signOut()
     }
 
 }
